@@ -3,14 +3,79 @@ import java.sql.*;
 import java.io.*;
 
 public class testdriver2 {
+	
 	/**
-	 * @param args
+	 * Prompt for login page
 	 */
 	public static void displayLogin() {
 		System.out.println("1. Sign in with existing account");
 		System.out.println("2. Register with a new account");
 		System.out.println("3. Exit");
 		System.out.println("Please enter your choice:");
+	}
+	
+	/**
+	 * Prompt for home page
+	 */
+	public static void displayOperations() {
+		System.out.println("      Home     ");
+		System.out.println("1. Make a reservation");
+		System.out.println("2. Create a listing");
+		System.out.println("3. Alter a listing");
+		System.out.println("4. Record a stay");
+		System.out.println("5. Search for a house");
+		System.out.println("6. View suggested houses");
+		System.out.println("7. View similar users");
+		System.out.println("8. View most popular houses by category");
+		System.out.println("9. View most expensive by category");
+		System.out.println("10. View highest rated by category");
+		//TODO: last thing to add is admin abilities
+	}
+	
+	/**
+	 * Options for a way to filter search results
+	 */
+	public static void displayHouseFilters() {
+		System.out.println("       Select a Filter       ");
+		System.out.println("1. Sort by price: high to low");
+		System.out.println("2. Sort by price: low to high");
+		System.out.println("3. Highest rated");
+		System.out.println("4. Highest rated by trusted users");
+		System.out.println("5. No filter");
+		System.out.println("6. Back");
+	}
+	
+	/**
+	 * Options of actions to take on a selected temporary house.
+	 */
+	public static void displayHouseOptions(){
+		System.out.println("       Listing Options       ");
+		System.out.println("1. Mark as favorite");
+		System.out.println("2. View feedback");
+		System.out.println("3. Give feedback");
+		System.out.println("4. Make a reservation");
+		System.out.println("5. Record a Stay");
+		System.out.println("6. Get most useful feedback");
+		System.out.println("7. Back");
+	}
+	
+	/**
+	 * Options of actions to take on a selected feedback.
+	 */
+	public static void displayRatingOptions(){
+		System.out.println("       Feedback Options       ");
+		System.out.println("1. Trust this user");
+		System.out.println("2. Rate this feedback");
+		System.out.println("3. Back");
+	}
+	
+	/**
+	 * Option of actions to take on a selected user.
+	 */
+	public static void displayUserOptions(){
+		System.out.println("       User Options        ");
+		System.out.println("1. Trust this user");
+		System.out.println("2. Back");
 	}
 
 	public static void main(String[] args) {
