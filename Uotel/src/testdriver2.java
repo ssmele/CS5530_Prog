@@ -80,78 +80,119 @@ public class testdriver2 {
 		System.out.println("        Welcome to the Uotel System     ");
 		Connector con = null;
 		String choice;
+		User current_user = null;
 
 		int c = 0;
 		try {
 			con = new Connector();
 			Querys q = new Querys();
-			//q.loginUser("stone", "test", con.stmt);
-			//q.newUser("swag", "stone", "swag", "ues", "sone", true, con.stmt);
 			BufferedReader in = new BufferedReader(new InputStreamReader(
 					System.in));
 
 			while (true) {
-				displayLogin();
-				while ((choice = in.readLine()) == null && choice.length() == 0)
-					;
-				try {
-					c = Integer.parseInt(choice);
-				} catch (Exception e) {
-					continue;
-				}
-				if (c < 1 | c > 3)
-					continue;
-				// Case for logging in
-				if (c == 1) {
-					String login, password;
-					System.out.println("please enter login:");
-					while ((login = in.readLine()) == null
-							&& login.length() == 0)
+				if (current_user == null) {
+					displayLogin();
+					while ((choice = in.readLine()) == null && choice.length() == 0)
 						;
-					System.out.println("please enter a password:");
-					while ((password = in.readLine()) == null
-							&& password.length() == 0)
-						;
-					User usr = q.loginUser(login, password, con.stmt);
-					if (usr != null)
-						handleUser(usr);
+					try {
+						c = Integer.parseInt(choice);
+					} catch (Exception e) {
+						continue;
+					}
+					if (c < 1 | c > 3)
+						continue;
+					// Case for logging in
+					if (c == 1) {
+						String login, password;
+						System.out.println("please enter login:");
+						while ((login = in.readLine()) == null && login.length() == 0)
+							;
+						System.out.println("please enter a password:");
+						while ((password = in.readLine()) == null && password.length() == 0)
+							;
+						User usr = q.loginUser(login, password, con.stmt);
+						if (usr != null){
+							current_user = usr;
+							handleUser(usr);
+						}
 
-					// Case for creating a new account
-				} else if (c == 2) {
-					String login, password, name, address, phone;
-					System.out.println("please enter login:");
-					while ((login = in.readLine()) == null
-							&& login.length() == 0)
-						;
-					System.out.println("please enter a password:");
-					while ((password = in.readLine()) == null
-							&& password.length() == 0)
-						;
-					
-					System.out.println("please enter your name:");
-					while ((name = in.readLine()) == null
-							&& name.length() == 0);
-					
-					System.out.println("please enter your address:");
-					while ((address = in.readLine()) == null
-							&& address.length() == 0);
-					
-					System.out.println("please enter your phone:");
-					while ((phone = in.readLine()) == null
-							&& phone.length() == 0);
-					
-					User user = q.newUser(login, name, password, address, phone, false, con.stmt);
-					if(user != null){
-						handleUser(user);
-					};
-					//TODO: handle the case for creating an account
-				}else if (c == 3)
-					return;
-				else {
-					System.out.println("EoM");
-					con.stmt.close();
+						// Case for creating a new account
+					} else if (c == 2) {
+						String login, password, name, address, phone;
+						System.out.println("please enter login:");
+						while ((login = in.readLine()) == null && login.length() == 0)
+							;
+						System.out.println("please enter a password:");
+						while ((password = in.readLine()) == null && password.length() == 0)
+							;
 
-					break;
+						System.out.println("please enter your name:");
+						while ((name = in.readLine()) == null && name.length() == 0)
+							;
+
+						System.out.println("please enter your address:");
+						while ((address = in.readLine()) == null && address.length() == 0)
+							;
+
+						System.out.println("please enter your phone:");
+						while ((phone = in.readLine()) == null && phone.length() == 0)
+							;
+
+						User user = q.newUser(login, name, password, address, phone, false, con.stmt);
+						if (user != null) {
+							current_user = user;
+							handleUser(user);
+						}
+						;
+						// TODO: handle the case for creating an account
+					} else if (c == 3)
+						return;
+					else {
+						System.out.println("EoM");
+						con.stmt.close();
+
+						break;
+					}
+				} else {
+					displayOperations();
+					while ((choice = in.readLine()) == null && choice.length() == 0)
+						;
+					try {
+						c = Integer.parseInt(choice);
+					} catch (Exception e) {
+						continue;
+					}
+					if (c < 1 | c > 10)
+						continue;
+					if (c == 2) {
+						//Gather up information for a new TH. #SWAG
+						//TODO: Get price instead of hardcoding it.
+						String category, year_built, name, address, phone, url, price;
+						System.out.println("please enter th category:");
+						while ((category = in.readLine()) == null && category.length() == 0)
+							;
+						System.out.println("please enter year th was built:");
+						while ((year_built = in.readLine()) == null && year_built.length() == 0)
+							;
+
+						System.out.println("please enter name of th.:");
+						while ((name = in.readLine()) == null && name.length() == 0)
+							;
+
+						System.out.println("please enter th phone:");
+						while ((phone = in.readLine()) == null && phone.length() == 0)
+							;
+						System.out.println("please enter your address:");
+						while ((address = in.readLine()) == null && address.length() == 0)
+							;
+
+						System.out.println("please enter your phone:");
+						while ((url = in.readLine()) == null && url.length() == 0)
+							;
+						
+						q.newTh(category, year_built, name, address, url, phone, 120, current_user, con.con);
+					}
+
 				}
 			}
 		} catch (Exception e) {
