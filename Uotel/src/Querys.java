@@ -43,7 +43,7 @@ public class Querys {
 			rs.close();
 
 			if (count == 1) {
-				System.out.println("Correct! You are now signed in as " + login + " !");
+				System.out.println("Correct! You are now signed in as " + login + "!");
 				return usr;
 			} else {
 				System.out.println("Login, and password do not match.");
