@@ -13,14 +13,16 @@ public class Querys {
 				+ "VALUES (" + "'" + login + "','" + name + "','" + password + "','" + address + "','" + phone + "'," + user_type + ");";
 		
 		
-		int amount_changed = 0;
 		System.out.println("executing " + sql);
 		try {
-			amount_changed = stmt.executeUpdate(sql);
+			stmt.executeUpdate(sql);
+		} catch (java.sql.SQLIntegrityConstraintViolationException e){
+			System.out.println("User with specified login already exists please try again!");
+			return null;
 		} catch (Exception e) {
 			System.out.println("cannot execute the query");
 			return null;
-		} 
+		}
 		
 		return new User(login, password, user_type);
 	}
