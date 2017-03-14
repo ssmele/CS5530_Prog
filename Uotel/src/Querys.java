@@ -5,34 +5,24 @@ public class Querys {
 	public Querys() {
 	}
 
-	public String newUser(String login, String name, String password, String address, String phone, boolean user_type,
+	public User newUser(String login, String name, String password, String address, String phone, boolean user_type,
 			Statement stmt) {
 
 		// Construct beautiful insert statement.
-		String sql = "INSERT INTO user (login, name, password, address, phone, user_type)" + "VALUES (" + "','" + login
-				+ "','" + name + "','" + password + "','" + address + "','" + phone + "','" + user_type + "')";
-
-		String output = "";
-		ResultSet rs = null;
+		String sql = "INSERT INTO user "
+				+ "VALUES (" + "'" + login + "','" + name + "','" + password + "','" + address + "','" + phone + "'," + user_type + ");";
+		
+		
+		int amount_changed = 0;
 		System.out.println("executing " + sql);
 		try {
-			rs = stmt.executeQuery(sql);
-			while (rs.next()) {
-				output += rs.getString("name") + "   " + rs.getString("password") + "\n";
-			}
-			rs.close();
+			amount_changed = stmt.executeUpdate(sql);
 		} catch (Exception e) {
 			System.out.println("cannot execute the query");
-		} finally {
-			try {
-				if (rs != null && !rs.isClosed())
-					rs.close();
-			} catch (Exception e) {
-				System.out.println("cannot close resultset");
-			}
-		}
-		return output;
-
+			return null;
+		} 
+		
+		return new User(login, password, user_type);
 	}
 
 	public User loginUser(String login, String password, Statement stmt) {
