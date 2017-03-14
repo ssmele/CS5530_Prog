@@ -7,7 +7,6 @@ public class testdriver2 {
 	 * @param args
 	 */
 	public static void displayLogin() {
-		System.out.println("        Welcome to the Uotel System     ");
 		System.out.println("1. Sign in with existing account");
 		System.out.println("2. Register with a new account");
 		System.out.println("3. Exit");
@@ -15,8 +14,7 @@ public class testdriver2 {
 	}
 
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-		System.out.println("Uotel Login");
+		System.out.println("        Welcome to the Uotel System     ");
 		Connector con = null;
 		String choice;
 
