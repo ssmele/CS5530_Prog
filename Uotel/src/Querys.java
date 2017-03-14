@@ -29,7 +29,7 @@ public class Querys {
 
 	public User loginUser(String login, String password, Statement stmt) {
 		// Construct sql select statement.
-		String sql = "Select * from user where user.login = '" + login + "' and user.password '" + password + "'";
+		String sql = "Select * from user where user.login = '" + login + "' and user.password = '" + password + "';";
 		ResultSet rs = null;
 		System.out.println("executing " + sql);
 		try {
