@@ -35,7 +35,7 @@ public class Querys {
 
 	}
 
-	public boolean loginUser(String login, String password, Statement stmt) {
+	public User loginUser(String login, String password, Statement stmt) {
 		// Construct sql select statement.
 		String sql = "Select * from user where user.login = '" + login + "' and user.password '" + password + "'";
 		ResultSet rs = null;
@@ -43,20 +43,19 @@ public class Querys {
 		try {
 			rs = stmt.executeQuery(sql);
 			int count = 0;
+			User usr = null;
 			while (rs.next()) {
-				// Need to also get information out the this user to be able see
-				// what type of user, and information
-				// we will later also need to query.
+				usr = new User(rs.getString("login"), rs.getString("password"), rs.getInt("user_type") == 1);
 				count++;
 			}
 			rs.close();
 
 			if (count == 1) {
 				System.out.println("Correct! You are now signed in as " + login + " !");
-				return true;
+				return usr;
 			} else {
 				System.out.println("Login, and password do not match.");
-				return false;
+				return null;
 			}
 
 		} catch (Exception e) {
@@ -69,8 +68,7 @@ public class Querys {
 				System.out.println("cannot close resultset");
 			}
 		}
-		return false;
-
+		return null;
 	}
 
 }
