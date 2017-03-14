@@ -24,7 +24,7 @@ public class testdriver2 {
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		System.out.println("Example for cs5530");
+		System.out.println("Uotel Login");
 		Connector con = null;
 		String choice;
 		String cname;
@@ -36,8 +36,6 @@ public class testdriver2 {
 		try {
 			// remember to replace the password
 			con = new Connector();
-			System.out.println("Database connection established");
-
 			BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
 
 			while (true) {
