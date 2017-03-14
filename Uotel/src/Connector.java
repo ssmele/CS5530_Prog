@@ -3,7 +3,7 @@ import java.sql.*;
 public class Connector {
 	public Connection con;
 	public Statement stmt;
-
+	
 	public Connector() throws Exception {
 		try {
 			String userName = "5530u66";
@@ -13,8 +13,7 @@ public class Connector {
 			con = DriverManager.getConnection(url, userName, password);
 			stmt = con.createStatement();
 		} catch (Exception e) {
-			System.err
-					.println("Unable to open mysql jdbc connection. The error is as follows,\n");
+			System.err.println("Unable to open mysql jdbc connection. The error is as follows,\n");
 			System.err.println(e.getMessage());
 			throw (e);
 		}
