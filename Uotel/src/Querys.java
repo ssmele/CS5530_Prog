@@ -424,7 +424,7 @@ public class Querys {
 	 * @param stmt
 	 * @return
 	 */
-	public ArrayList<String> mostUseful(int limit, Statement stmt) {
+	public ArrayList<String> mostUsefulUser(int limit, Statement stmt){
 		ArrayList<String> loginList = new ArrayList<>();
 		String sql = "select login, sum(score) " + "from feedback " + "group by login " + "order by sum(score) "
 				+ "desc limit " + Integer.toString(limit) + ";";
@@ -472,5 +472,53 @@ public class Querys {
 	public ArrayList<TH> browse(Statement stmt, int max, int min, String city, String state, String keyword,
 			String category, int sort) {
 		return null;
+	}
+	
+	/**
+	 * Method used to retrieve most useful feedback for a particular th.
+	 * @param selected
+	 * @param limit
+	 * @param stmt
+	 * @return
+	 */
+	public ArrayList<Feedback> mostUsefulFeedback(TH selected, int limit, Statement stmt){
+		ArrayList<Feedback> feedbackList = new ArrayList<>();
+		String sql = "select * "
+				   + "from feedback "
+				   + "where feedback.fid in ("
+									+ "select feedback.fid "
+									+ "from feedback "
+									+ "left outer join rate "
+									+ "on rate.fid = feedback.fid  "
+									+ "where hid = " + Integer.toString(selected.getHid()) + " "
+									+ "group by feedback.fid "
+									+ "order by sum(rate.rating) desc) "
+				   + "limit " + Integer.toString(limit) + ";";
+
+		//Execute the most useful query and then add each feedback 
+		ResultSet rs = null;
+		try{
+			rs = stmt.executeQuery(sql);
+			while(rs.next()){
+				feedbackList.add(new Feedback(rs.getInt("fid"),
+											  rs.getString("text"),
+											  rs.getDate("date"),
+											  rs.getInt("score"),
+											  rs.getString("login"),
+											  rs.getInt("hid")));
+			}
+			rs.close();
+		}catch(Exception e){
+			System.out.println("cannot execute query: " + sql);
+			return null;
+		}finally {
+			try {
+				if (rs != null && !rs.isClosed())
+					rs.close();
+			} catch (Exception e) {
+				System.out.println("cannot close resultset");
+			}
+		}
+		return feedbackList;
 	}
 }

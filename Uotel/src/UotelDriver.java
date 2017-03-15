@@ -231,7 +231,7 @@ public class UotelDriver {
 		}
 
 		Querys q = new Querys();
-		ArrayList<String> loginList = q.mostUseful(limit, stmt);
+		ArrayList<String> loginList = q.mostUsefulUser(limit, stmt);
 		System.out.println("Most useful users:");
 		int count = 1;
 		for (String login : loginList) {
@@ -313,10 +313,10 @@ public class UotelDriver {
 	}
 
 	public static void thSelected(TH th, Connector con, BufferedReader in, User usr) throws IOException {
-		System.out.println(th.toString());
-		displayHouseOptions();
-		System.out.println("Select an option number or 0 to go back to the list (only back currently works)");
+		System.out.println("Currently selected TH: " + th.toString());
 		while (true) {
+			displayHouseOptions();
+			System.out.println("Select an option number or 0 to go back to the list (only back currently works)");
 			String input = null;
 			while ((input = in.readLine()) == null && input.length() == 0)
 				;
@@ -329,9 +329,54 @@ public class UotelDriver {
 			}
 			if (num == 0)
 				return;
+			if (num == 6){
+				handleMostUsefulFeedback(th, in, con.stmt);
+				
+			}
 		}
 	}
 
+	/**
+	 * THis method is used to get the most useful feed back for a certain th. Makes use of method in the Queries
+	 * class to do so.
+	 * @param th
+	 * @param in
+	 * @param stmt
+	 */
+	public static void handleMostUsefulFeedback(TH th, BufferedReader in, Statement stmt){
+		int limit;
+		System.out.println("What is the max number of Feedback you would like displayed?");
+		while (true) {
+			try {
+				//Check to see if the user wants to go back.
+				limit = Integer.parseInt(in.readLine());
+				if (limit < 1) {
+					System.out.println("Please try again limit must be 1 or greater.");
+					continue;
+				}
+				break;
+			} catch (Exception e) {
+				System.out.println("Please try again with a valid number.");
+			}
+		}
+		
+		Querys q = new Querys();
+		ArrayList<Feedback> feedbackList = q.mostUsefulFeedback(th, limit, stmt);
+		System.out.println("Most useful feedback:");
+		int count = 1;
+		for(Feedback feed : feedbackList){
+			System.out.println(Integer.toString(count) + "." + feed.toString());
+			count++;
+		}
+		
+		if(feedbackList.isEmpty()){
+			System.out.println("No feedback for this particular TH.");
+		}
+		System.out.println("-----------------------------");
+		return;
+	}
+	
+	
 	/**
 	 * This method is called whenever a list of THs are displayed to the user.
 	 * This will allow the user to select one of the THs displayed to them to
@@ -835,7 +880,6 @@ public class UotelDriver {
 		System.out.println("4. Make a reservation");
 		System.out.println("5. Record a Stay");
 		System.out.println("6. Get most useful feedback");
-		System.out.println("7. Back");
 	}
 
 	/**
