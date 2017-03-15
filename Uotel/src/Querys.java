@@ -261,5 +261,85 @@ public class Querys {
 		}
 
 	}
+	
+	/**
+	 * This method returns a list of the most trusted users in descending order.
+	 * The query used here is quite beautiful and should be admired.
+	 * @param limit
+	 * @param stmt
+	 * @return
+	 */
+	public ArrayList<String> mostTrusted(int limit, Statement stmt){
+		ArrayList<String> loginList = new ArrayList<>();
+		String sql = "select login, " 
+				    + "count(if(is_trusted = True, True, Null)) - "
+					+ "count(if(is_trusted = False, True, Null)) as trust_score "
+					+ "from user " 
+					+ "left outer join trust " 
+					+ "on user.login = trust.trustee_id " 
+				    + "group by login "
+					+ "order by trust_score desc "
+					+ "limit " + Integer.toString(limit) + ";";
+
+		//Execute the most trusted user query. For each entry get the login and add it to the list.
+		ResultSet rs = null;
+		try{
+			rs = stmt.executeQuery(sql);
+			while(rs.next()){
+				loginList.add(rs.getString("login"));
+			}
+			rs.close();
+		}catch(Exception e){
+			System.out.println("cannot execute query: " + sql);
+			return null;
+		} finally {
+			try {
+				if (rs != null && !rs.isClosed())
+					rs.close();
+			} catch (Exception e) {
+				System.out.println("cannot close resultset");
+			}
+		}
+		
+		return loginList;
+	}
+	
+	/**
+	 * This method returns a list of the most useful users in descending order.
+	 * The query used here is ok and should be glanced at.
+	 * @param limit
+	 * @param stmt
+	 * @return
+	 */
+	public ArrayList<String> mostUseful(int limit, Statement stmt){
+		ArrayList<String> loginList = new ArrayList<>();
+		String sql = "select login, sum(score) "
+				   + "from feedback "
+				   + "group by login "
+				   + "order by sum(score) "
+				   + "desc limit " + Integer.toString(limit) + ";";
+
+		//Execute the most trusted user query. For each entry get the login and add it to the list.
+		ResultSet rs = null;
+		try{
+			rs = stmt.executeQuery(sql);
+			while(rs.next()){
+				loginList.add(rs.getString("login"));
+			}
+			rs.close();
+		}catch(Exception e){
+			System.out.println("cannot execute query: " + sql);
+			return null;
+		} finally {
+			try {
+				if (rs != null && !rs.isClosed())
+					rs.close();
+			} catch (Exception e) {
+				System.out.println("cannot close resultset");
+			}
+		}
+		
+		return loginList;
+	}
 
 }
