@@ -116,7 +116,7 @@ public class UotelDriver {
 						User usr = q.loginUser(login, password, con.stmt);
 						if (usr != null){
 							current_user = usr;
-							handleUser(usr);
+							applicationDriver(con, in, usr);
 						}
 
 						// Case for creating a new account
@@ -144,7 +144,7 @@ public class UotelDriver {
 						User user = q.newUser(login, name, password, address, phone, false, con.stmt);
 						if (user != null) {
 							current_user = user;
-							handleUser(user);
+							applicationDriver(con, in, user);
 						}
 						;
 						// TODO: handle the case for creating an account
@@ -239,7 +239,19 @@ public class UotelDriver {
 		}
 	}
 
-	public static void handleUser(User usr) {
-		// Here we will handle the user once they are logged in
+	/**
+	 * This method drives the application once the user 
+	 * has established a connection.
+	 * @param usr
+	 * @throws IOException 
+	 */
+	public static void applicationDriver(Connector con, BufferedReader in, User usr) throws IOException {
+		while(true){
+			displayHouseOptions();
+			String choice = null;
+			while ((choice = in.readLine()) == null && choice.length() == 0)
+				;
+			
+		}
 	}
 }
