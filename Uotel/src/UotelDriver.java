@@ -4,6 +4,8 @@ import java.sql.Statement;
 import java.text.DateFormat;
 import java.util.ArrayList;
 
+import sun.awt.image.PixelConverter.Ushort555Rgb;
+
 public class UotelDriver {
 
 	/**
@@ -107,9 +109,9 @@ public class UotelDriver {
 	 */
 	public static void applicationDriver(Connector con, BufferedReader in, User usr) throws IOException {
 		while (true) {
-			displayOperations();
+			displayOperations(usr.isAdmin());
 			String choice = null;
-			while ((choice = in.readLine()) == null && choice.length() == 0)
+			while ((choice = in.readLine()) == null || choice.length() == 0)
 				;
 			int c = 100;
 			try {
@@ -148,11 +150,94 @@ public class UotelDriver {
 			case 7:
 				// view similar users
 				break;
+			case 11:
+				//Most trusted.
+				if(usr.isAdmin()){
+					handleMostTrusted(in, con.stmt);
+					break;
+				}
+			case 12:
+				//Most useful.
+				if(usr.isAdmin()){
+					handleMostUseful(in, con.stmt);
+					break;
+				}
 			default:
 				System.out.println("Please enter a valid option");
 				continue;
 			}
 		}
+	}
+	
+	
+	/**
+	 * This method retrieves the most trusted users with the help of the querys class, and then
+	 * displays them to the admin user.
+	 * @param in
+	 * @param stmt
+	 */
+	public static void handleMostTrusted(BufferedReader in, Statement stmt){
+		int limit;
+		while (true) {
+			try {
+				//Check to see if the user wants to go back.
+				System.out.println("Please provide a limit on the amout of users you want returned.");
+				limit = Integer.parseInt(in.readLine());
+				if (limit < 1) {
+					System.out.println("Please try again limit must be 1 or greater.");
+					continue;
+				}
+				break;
+			} catch (Exception e) {
+				System.out.println("Please try again with a valid number.");
+			}
+		}
+		
+		Querys q = new Querys();
+		ArrayList<String> loginList = q.mostTrusted(limit, stmt);
+		System.out.println("Most trusted users:");
+		int count = 1;
+		for(String login : loginList){
+			System.out.println(Integer.toString(count) + "." + login);
+			count++;
+		}
+		System.out.println("-----------------------------");
+		return;
+	}
+	
+	/**
+	 * This method retrieves the most useful users with the help of the querys class, and then
+	 * displays them to the admin user.
+	 * @param in
+	 * @param stmt
+	 */
+	public static void handleMostUseful(BufferedReader in, Statement stmt){
+		int limit;
+		System.out.println("What is the max number of houses you would like displayed?");
+		while (true) {
+			try {
+				//Check to see if the user wants to go back.
+				limit = Integer.parseInt(in.readLine());
+				if (limit < 1) {
+					System.out.println("Please try again limit must be 1 or greater.");
+					continue;
+				}
+				break;
+			} catch (Exception e) {
+				System.out.println("Please try again with a valid number.");
+			}
+		}
+		
+		Querys q = new Querys();
+		ArrayList<String> loginList = q.mostUseful(limit, stmt);
+		System.out.println("Most useful users:");
+		int count = 1;
+		for(String login : loginList){
+			System.out.println(Integer.toString(count) + "." + login);
+			count++;
+		}
+		System.out.println("-----------------------------");
+		return;
 	}
 
 	/***
@@ -282,19 +367,63 @@ public class UotelDriver {
 				try {
 					num = Integer.parseInt(inNum);
 				} catch (Exception e) {
-					System.out.println("Please selected a valid house");
+					System.out.println("Please select a valid house");
 					continue;
 				}
 				if (num == 0)
 					return;
 				if (num <= 0 || num > ths.size()) {
-					System.out.println("Please selected a valid house");
+					System.out.println("Please select a valid house");
 					continue;
 				} else {
 					thSelected(ths.get(num - 1), con, in, usr);
 					break;
 				}
 			}
+		}
+	}
+	
+	/**
+	 * Method used to handle when a TH has been choosen by a user to view, and either
+	 * favorite, rate, or view stuff about it.
+	 * @param thInQuestion
+	 * @param in
+	 */
+	public static void handleHousingOptions(TH thInQuestion, BufferedReader in){
+		String response = null;
+		try {
+			while (!response.equals("Done")) {
+				displayHouseOptions();
+				System.out.println("Please enter value of action you want to take.");
+				response = in.readLine();
+				switch (response) {
+				case "1":
+					//favorite
+					break;
+				case "2":
+					//feed back
+					break;
+				case "3":
+					//give feed back
+					break;
+				case "4":
+					//make a res.
+					break;
+				case "5":
+					//record a stay
+					break;
+				case "6":
+					//get feedback
+					break;
+				case "7":
+					return;
+				default:
+					System.out.print("Didnt match any updatable values. Please try again.");
+				}
+			}
+		} catch (Exception e) {
+			System.out.println("Something went wrong updating values. Pleas try again.");
+			return;
 		}
 	}
 
@@ -538,7 +667,7 @@ public class UotelDriver {
 	/**
 	 * Prompt for home page
 	 */
-	public static void displayOperations() {
+	public static void displayOperations(boolean isAdmin) {
 		System.out.println("      Home     ");
 		System.out.println("0. logout");
 		System.out.println("1. Make a reservation");
@@ -551,7 +680,10 @@ public class UotelDriver {
 		System.out.println("8. View most popular houses by category");
 		System.out.println("9. View most expensive by category");
 		System.out.println("10. View highest rated by category");
-		// TODO: last thing to add is admin abilities
+		if (isAdmin) {
+			System.out.println("11. Top m 'trusted' users.");
+			System.out.println("12. Top m 'useful' users.");
+		}
 	}
 
 	/**
