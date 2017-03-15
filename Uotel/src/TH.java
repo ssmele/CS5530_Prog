@@ -20,6 +20,10 @@ public class TH {
 	private String login;
 	private Date date_listed;
 	
+	public TH(){
+		
+	}
+	
 	public TH(int hid, String category, int price, String year_built, String name, String address, String url, String phone,
 			String login, Date date_listed) {
 		super();

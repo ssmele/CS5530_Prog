@@ -155,46 +155,147 @@ public class UotelDriver {
 		}
 	}
 
+	/***
+	 * Determines which statistics to print and how to print per category. This
+	 * method prints all of those filtered categories.
+	 * 
+	 * @param choice
+	 * @param con
+	 * @param in
+	 * @param usr
+	 * @throws IOException
+	 */
 	public static void viewStatistics(int choice, Connector con, BufferedReader in, User usr) throws IOException {
-		System.out.println("What is the max number of houses you would like displayed?");
+		System.out.println("What is the max number of houses you would like displayed per category?");
+		Querys q = new Querys();
 		while (true) {
 			String inNum = null;
+			int num = -1;
 			while ((inNum = in.readLine()) == null && inNum.length() == 0)
 				;
-			int num = -1;
 			try {
 				num = Integer.parseInt(inNum);
 			} catch (Exception e) {
-				System.out.println("Please input a valid number");
+				System.out.println("Please input a valid option");
 				continue;
 			}
-			switch(choice){
+			ArrayList<TH> resultList = new ArrayList<TH>();
+			switch (choice) {
 			case 8:
-				//choice for most popular
-				break;
+				// choice for most popular
+				resultList = limitCategoryNum(q.getMostPopular(con.stmt), num);
+				viewTHs(resultList, con, in, usr, true);
+				return;
 			case 9:
-				//choice for most expensive
-				break;
+				// choice for most expensive
+				resultList = limitCategoryNum(q.getMostExpensive(con.stmt), num);
+				viewTHs(resultList, con, in, usr, true);
+				return;
 			case 10:
-				//choice for highest rated
-				break;
+				// choice for highest rated
+				resultList = limitCategoryNum(q.getHighestRated(con.stmt), num);
+				viewTHs(resultList, con, in, usr, true);
+				return;
 			}
 		}
 	}
-	
+
+	/***
+	 * @param ths
+	 * @param all
+	 * @return The list of THs limited by number per category
+	 */
+	public static ArrayList<TH> limitCategoryNum(ArrayList<TH> ths, int max) {
+
+		int count = 0;
+		String currentCategory = "";
+		ArrayList<TH> retList = new ArrayList<TH>();
+		for (TH temp : ths) {
+			if (!currentCategory.equals(temp.getCategory())) {
+				currentCategory = temp.getCategory();
+				count = 1;
+				retList.add(temp);
+			} else if (count >= max) {
+				continue;
+			} else {
+				count++;
+				retList.add(temp);
+			}
+		}
+		return retList;
+	}
+
+	public static void thSelected(TH th, Connector con, BufferedReader in, User usr) throws IOException {
+		System.out.println(th.toString());
+		displayHouseOptions();
+		System.out.println("Select an option number or 0 to go back to the list (only back currently works)");
+		while (true) {
+			String input = null;
+			while ((input = in.readLine()) == null && input.length() == 0)
+				;
+			int num = -1;
+			try {
+				num = Integer.parseInt(input);
+			} catch (Exception e) {
+				System.out.println("Please enter a valid option");
+				continue;
+			}
+			if (num == 0)
+				return;
+		}
+	}
+
 	/**
-	 * This method is called whenever a list of THs are displayed
-	 * to the user. This will allow the user to select one of the THs
-	 * displayed to them to either leave a review, make a reservation, 
-	 * or document a stay.
+	 * This method is called whenever a list of THs are displayed to the user.
+	 * This will allow the user to select one of the THs displayed to them to
+	 * either leave a review, make a reservation, or document a stay.
 	 * 
 	 * @param ths
 	 * @param con
 	 * @param in
 	 * @param usr
+	 * @throws IOException
 	 */
-	public static void viewTHs(ArrayList<TH> ths, Connector con, BufferedReader in, User usr){
-		
+	public static void viewTHs(ArrayList<TH> ths, Connector con, BufferedReader in, User usr, boolean catOrder)
+			throws IOException {
+		while (true) {
+			System.out.println("      List of Houses      ");
+			String category = "";
+			int count = 1;
+			for (TH th : ths) {
+				if (catOrder) {
+					if (!category.equals(th.getCategory())) {
+						category = th.getCategory();
+						System.out.println();
+						System.out.println("  " + category);
+					}
+				}
+				System.out.println(count + ". " + th.getName() + " " + th.getPrice());
+				count++;
+			}
+			System.out.println("Enter a house number to view it or 0 to go back");
+			while (true) {
+				String inNum = null;
+				while ((inNum = in.readLine()) == null && inNum.length() == 0)
+					;
+				int num = -1;
+				try {
+					num = Integer.parseInt(inNum);
+				} catch (Exception e) {
+					System.out.println("Please selected a valid house");
+					continue;
+				}
+				if (num == 0)
+					return;
+				if (num <= 0 || num > ths.size()) {
+					System.out.println("Please selected a valid house");
+					continue;
+				} else {
+					thSelected(ths.get(num - 1), con, in, usr);
+					break;
+				}
+			}
+		}
 	}
 
 	/***

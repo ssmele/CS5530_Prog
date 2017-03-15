@@ -259,6 +259,124 @@ public class Querys {
 		}
 	}
 	
-	public ArrayList<TH> 
+	/***
+	 * @param max
+	 * @param stmt
+	 * @return A list of the most popular THs grouped by category 
+	 * and ordered by the number of visits in descending order.
+	 */
+	public ArrayList<TH> getMostPopular(Statement stmt){
+		String sql = "select t.category, t.hid, t.name, t.price, COUNT(t.hid) " +
+							"from visit v, reserve r, th t " +
+							"WHERE v.rid = r.rid AND t.hid = h_id " +
+							"GROUP BY t.category, t.hid, t.name, t.price " +
+							"ORDER BY t.category, COUNT(t.hid);";
+		ResultSet rs = null;
+		ArrayList<TH> thList = new ArrayList<TH>();
+		try{
+			rs = stmt.executeQuery(sql);
+			rs = stmt.executeQuery(sql);
+			while (rs.next()) {
+				TH temp = new TH();
+				temp.setCategory(rs.getString("category"));
+				temp.setHid(rs.getInt("hid"));
+				temp.setName(rs.getString("name"));
+				temp.setPrice(rs.getInt("price"));
+				thList.add(temp);
+			}
+			rs.close();
+		}catch(Exception e){
+			System.out.println("cannot execute query: " + sql);
+			return null;
+		}finally {
+			try {
+				if (rs != null && !rs.isClosed())
+					rs.close();
+			} catch (Exception e) {
+				System.out.println("cannot close resultset");
+			}
+		}
+		return thList;
+	}
+	
+	/***
+	 * @param max
+	 * @param stmt
+	 * @return A list of the most expensive THs grouped by category 
+	 * and ordered by price of the TH in descending order.
+	 */
+	public ArrayList<TH> getMostExpensive(Statement stmt){
+		String sql = "select t.category, t.hid, t.name, t.price " +
+					 "from th t " +
+					 "ORDER BY t.category, t.price DESC;";
+		ResultSet rs = null;
+		ArrayList<TH> thList = new ArrayList<TH>();
+		try{
+			rs = stmt.executeQuery(sql);
+			rs = stmt.executeQuery(sql);
+			while (rs.next()) {
+				TH temp = new TH();
+				temp.setCategory(rs.getString("category"));
+				temp.setHid(rs.getInt("hid"));
+				temp.setName(rs.getString("name"));
+				temp.setPrice(rs.getInt("price"));
+				thList.add(temp);
+			}
+			rs.close();
+		}catch(Exception e){
+			System.out.println("cannot execute query: " + sql);
+			return null;
+		}finally {
+			try {
+				if (rs != null && !rs.isClosed())
+					rs.close();
+			} catch (Exception e) {
+				System.out.println("cannot close resultset");
+			}
+		}
+		return thList;
+	}
+	
+	/***
+	 * 
+	 * @param max
+	 * @param stmt
+	 * @return A list of the highest rated THs grouped by category 
+	 * and ordered by the average of all the ratings of the TH in 
+	 * descending order.
+	 */
+	public ArrayList<TH> getHighestRated(Statement stmt){
+		String sql = "select t.category, t.hid, t.name, t.price, AVG(f.score) " +
+					 "from th t, feedback f " +
+					 "where t.hid = f.hid " +
+					 "group by t.category, t.hid, t.name, t.price " +
+					 "ORDER BY t.category, AVG(f.score) DESC;";
+		ResultSet rs = null;
+		ArrayList<TH> thList = new ArrayList<TH>();
+		try{
+			rs = stmt.executeQuery(sql);
+			rs = stmt.executeQuery(sql);
+			while (rs.next()) {
+				TH temp = new TH();
+				temp.setCategory(rs.getString("category"));
+				temp.setHid(rs.getInt("hid"));
+				temp.setName(rs.getString("name"));
+				temp.setPrice(rs.getInt("price"));
+				thList.add(temp);
+			}
+			rs.close();
+		}catch(Exception e){
+			System.out.println("cannot execute query: " + sql);
+			return null;
+		}finally {
+			try {
+				if (rs != null && !rs.isClosed())
+					rs.close();
+			} catch (Exception e) {
+				System.out.println("cannot close resultset");
+			}
+		}
+		return thList;
+	}
 
 }
