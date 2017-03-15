@@ -301,19 +301,20 @@ public class UotelDriver {
 		try {
 			while (!response.equals("Done")) {
 				System.out.println("Updatable Fields:");
-				System.out.println("Category");
-				System.out.println("Price");
-				System.out.println("Year_Built");
-				System.out.println("Name");
-				System.out.println("Address");
-				System.out.println("Url");
-				System.out.println("Phone");
-				System.out.println("Date_Listed");
-				System.out.println("Keywords");
-				System.out.println("Done (When you want to stop updating)");
-				System.out.println("Please enter name of value you want to update.");
+				System.out.println("1.Category");
+				System.out.println("2.Price");
+				System.out.println("3.Year_Built");
+				System.out.println("4.Name");
+				System.out.println("5.Address");
+				System.out.println("6.Url");
+				System.out.println("7.Phone");
+				System.out.println("8.Date_Listed");
+				System.out.println("9.Keywords");
+				System.out.println("10.Done (When you want to stop updating)");
+				System.out.println("Please enter name or number of value you want to update.");
 				response = in.readLine();
 				switch (response) {
+				case "1":
 				case "Category":
 					// TODO: They may need to select from a list of categories.
 					System.out.println("Enter new Category");
@@ -321,12 +322,14 @@ public class UotelDriver {
 						;
 					toUpdate.setCategory(updateValue);
 					break;
+				case "2":
 				case "Price":
 					System.out.println("Enter new Price");
 					while ((updateValue = in.readLine()) == null && updateValue.length() == 0)
 						;
 					toUpdate.setPrice(Integer.parseInt(updateValue));
 					break;
+				case "3":
 				case "Year_Built":
 					System.out.println("Enter new Year_Built");
 					while ((updateValue = in.readLine()) == null && updateValue.length() == 0)
@@ -337,24 +340,28 @@ public class UotelDriver {
 						System.out.println("Year value cant be greater than 4 digits.");
 					}
 					break;
+				case "4":
 				case "Name":
 					System.out.println("Enter new Name");
 					while ((updateValue = in.readLine()) == null && updateValue.length() == 0)
 						;
 					toUpdate.setName(updateValue);
 					break;
+				case "5":
 				case "Address":
 					System.out.println("Enter new Address");
 					while ((updateValue = in.readLine()) == null && updateValue.length() == 0)
 						;
 					toUpdate.setAddress(updateValue);
 					break;
+				case "6":
 				case "Url":
 					System.out.println("Enter new URL");
 					while ((updateValue = in.readLine()) == null && updateValue.length() == 0)
 						;
 					toUpdate.setUrl(updateValue);
 					break;
+				case "7":
 				case "Phone":
 					System.out.println("Enter new Phone");
 					while ((updateValue = in.readLine()) == null && updateValue.length() == 0)
@@ -366,11 +373,13 @@ public class UotelDriver {
 					}
 					break;
 				case "Date_Listed":
+				case "8":
 					System.out.println("Enter new category");
 					while ((updateValue = in.readLine()) == null && updateValue.length() == 0)
 						;
 					toUpdate.setDate_listed(Date.valueOf(updateValue));
 					break;
+				case "9":
 				case "Keywords":
 					System.out.println("Please enter a keyword to add to your TH");
 					while ((updateValue = in.readLine()) == null || updateValue.length() == 0){
@@ -379,6 +388,7 @@ public class UotelDriver {
 					//Add keyword given by the user.
 					q.addKeywordToHID(updateValue, toUpdate.getHid(), stmt);
 					break;
+				case "10":
 				case "Done":
 					System.out.println("Your changes will now be updated.");
 					return toUpdate;
