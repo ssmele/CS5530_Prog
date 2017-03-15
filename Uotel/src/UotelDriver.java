@@ -1,6 +1,7 @@
 import java.io.*;
+import java.util.ArrayList;
 
-public class testdriver2 {
+public class UotelDriver {
 	
 	/**
 	 * Prompt for login page
@@ -75,12 +76,14 @@ public class testdriver2 {
 		System.out.println("1. Trust this user");
 		System.out.println("2. Back");
 	}
+	
 
 	public static void main(String[] args) {
 		System.out.println("        Welcome to the Uotel System     ");
 		Connector con = null;
 		String choice;
 		User current_user = null;
+		//current_user = new User("stone", "swag", true);
 
 		int c = 0;
 		try {
@@ -164,7 +167,7 @@ public class testdriver2 {
 					}
 					if (c < 1 | c > 10)
 						continue;
-					if (c == 2) {
+					else if (c == 2) {
 						//Gather up information for a new TH. #SWAG
 						//TODO: Get price instead of hardcoding it.
 						String category, year_built, name, address, phone, url, price;
@@ -191,6 +194,33 @@ public class testdriver2 {
 							;
 						
 						q.newTh(category, year_built, name, address, url, phone, 120, current_user, con.con);
+					}else if(c == 3){
+						//Gather up th's.
+						ArrayList<TH> currentUsersTH = q.getUsersTHs(current_user.getLogin(), con.stmt);
+						System.out.println("Current TH's you have listed:");
+						currentUsersTH.stream().forEach(s -> System.out.println((s.toString())));
+						
+						//Get hid user wants to update.
+						System.out.println("Please type in the hid of the th you want to update: ");
+						String hid = null;
+						while ((hid = in.readLine()) == null && hid.length() == 0);
+						System.out.println("Selected hid: " + hid);
+						
+						//Gather th that matches hid.
+						TH thToBeUpdated = null;
+						for(TH th: currentUsersTH){
+							if(Integer.toString(th.getHid()).equals(hid)){
+								thToBeUpdated = th;
+								break;
+							}
+						}
+						
+						//Make sure th is their.
+						if( thToBeUpdated == null){
+							System.out.println("Please provided a valid hid");
+							continue;
+						}
+						q.updateTH(thToBeUpdated, con.con);
 					}
 
 				}

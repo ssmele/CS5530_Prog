@@ -2,6 +2,7 @@ import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.sql.PreparedStatement;
 
 import java.sql.Connection;
@@ -17,7 +18,7 @@ public class Querys {
 		try {
 			PreparedStatement insertTH = con.prepareStatement(
 					"insert into th (category, price, year_built, name, address, url, phone, login, date_listed) "
-							+ "values (?, ?, ?, ?, ?, ?, ?, ?)");
+							+ "values (?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
 			insertTH.setString(1, category);
 			insertTH.setInt(2, price);
@@ -40,9 +41,67 @@ public class Querys {
 			return null;
 		}
 
-		return new TH(category, price, year_built, name, address, url, phone, current_user.getLogin(),
-				Date.valueOf(LocalDate.now()));
+		return new TH(-1, category, price, year_built, name, address, url, phone, current_user.getLogin(), Date.valueOf(LocalDate.now()));
 
+	}
+	
+	
+	public ArrayList<TH> getUsersTHs(String login, Statement stmt){
+		String sql = "Select * from th where login = '" + login + "';";
+		
+		System.out.println("executing: " + sql);
+		ResultSet rs = null;
+		ArrayList<TH> thList = new ArrayList<TH>();
+		
+		try{
+			rs = stmt.executeQuery(sql);
+			while (rs.next()) {
+				TH tempTH = new TH(rs.getInt("hid"), rs.getString("category"), rs.getInt("price"),
+						rs.getString("year_built"), rs.getString("name"), rs.getString("address"),
+						rs.getString("url"), rs.getString("phone"), rs.getString("login"),
+						rs.getDate("date_listed"));
+				thList.add(tempTH);
+			}
+			rs.close();
+		}catch(Exception e){
+			System.out.println("cannot execute query: " + sql);
+			return null;
+		}
+		
+		return thList;
+	}
+	
+	public TH updateTH(TH update, Connection con){
+		try {
+			PreparedStatement updateTH = con.prepareStatement(
+					"update th set category=?, price = ?, year_built = ?, name = ?, address = ?, url = ?, phone = ?, login = ?, date_listed = ?" +
+					"where hid = ?");
+			
+			//TODO: Still need to update values they want.
+			
+			updateTH.setString(1, update.getCategory());
+			updateTH.setInt(2, update.getPrice());
+			updateTH.setString(3, update.getYear_built());
+			updateTH.setString(4, update.getName());
+			updateTH.setString(5, update.getAddress());
+			updateTH.setString(6, update.getUrl());
+			updateTH.setString(7, update.getPhone());
+			updateTH.setString(8, update.getLogin());
+			updateTH.setDate(9, update.getDate_listed());
+			updateTH.setInt(10,  update.getHid());
+
+			updateTH.executeUpdate();
+			// TODO: DOnt really know what exceptions could get thrown here need
+			// to do more experimenting.
+		} catch (java.sql.SQLIntegrityConstraintViolationException e) {
+			System.out.println("Something got messed up.");
+			return null;
+		} catch (Exception e) {
+			System.out.println("cannot execute the query");
+			return null;
+		}
+
+		return update;
 	}
 	
 	public User newUser(String login, String name, String password, String address, String phone, boolean user_type,
@@ -71,7 +130,7 @@ public class Querys {
 
 	public User loginUser(String login, String password, Statement stmt) {
 		// Construct sql select statement.
-		String sql = "select * from user where login = '" + login + "' and password = '" + password + "'";
+		String sql = "select * from user where login = '" + login + "' and password = '" + password + "';";
 		ResultSet rs = null;
 		System.out.println("executing " + sql);
 		try {
