@@ -194,7 +194,87 @@ public class UotelDriver {
 	 * @param usr
 	 */
 	public static void viewTHs(ArrayList<TH> ths, Connector con, BufferedReader in, User usr){
-		
+		while (true) {
+			int count = 1;
+			System.out.println("TH's to view: \n--------------------------------");
+			for (TH th : ths) {
+				System.out.println(count + ". " + th.toString());
+			}
+			System.out.println("--------------------------\n Please select a TH.");
+			System.out.println("Or type 'Back' when you want head back to the main screen.");
+
+			// Get th user wants to interact with
+			System.out.println("Please type in the number of the th you want to update: ");
+			int index = -1;
+			String string_index;
+			while (true) {
+				try {
+					//Check to see if the user wants to go back.
+					string_index = in.readLine();
+					if (string_index.equals("Back")){
+						return;
+					}
+					
+					//If not continue onto to parsing the value.
+					index = Integer.parseInt(string_index);
+					if (index > ths.size() || index < 1) {
+						System.out.println("Please try again invalid th.");
+						continue;
+					}
+					break;
+				} catch (Exception e) {
+					System.out.println("Please try again invalid th.");
+				}
+			}
+
+			TH thInQuestion = ths.get(--index);
+			handleHousingOptions(thInQuestion, in);
+		}
+
+	}
+	
+	/**
+	 * Method used to handle when a TH has been choosen by a user to view, and either
+	 * favorite, rate, or view stuff about it.
+	 * @param thInQuestion
+	 * @param in
+	 */
+	public static void handleHousingOptions(TH thInQuestion, BufferedReader in){
+		String response = null;
+		try {
+			while (!response.equals("Done")) {
+				displayHouseOptions();
+				System.out.println("Please enter value of action you want to take.");
+				response = in.readLine();
+				switch (response) {
+				case "1":
+					//favorite
+					break;
+				case "2":
+					//feed back
+					break;
+				case "3":
+					//give feed back
+					break;
+				case "4":
+					//make a res.
+					break;
+				case "5":
+					//record a stay
+					break;
+				case "6":
+					//get feedback
+					break;
+				case "7":
+					return;
+				default:
+					System.out.print("Didnt match any updatable values. Please try again.");
+				}
+			}
+		} catch (Exception e) {
+			System.out.println("Something went wrong updating values. Pleas try again.");
+			return;
+		}
 	}
 
 	/***
