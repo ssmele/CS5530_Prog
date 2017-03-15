@@ -12,14 +12,13 @@ public class UotelDriver {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		//TODO: maybe created helper methods for logging in and 
+		// TODO: maybe created helper methods for logging in and
 		// creating an account.
 		System.out.println("        Welcome to the Uotel System     ");
 		Connector con = null;
 		String choice;
 		User current_user = null;
-		
-		
+
 		int c = 0;
 		try {
 			con = new Connector();
@@ -82,24 +81,8 @@ public class UotelDriver {
 				else {
 					System.out.println("EoM");
 					con.stmt.close();
-
 					break;
 				}
-//				displayOperations();
-//				while ((choice = in.readLine()) == null && choice.length() == 0)
-//					;
-//				try {
-//					c = Integer.parseInt(choice);
-//				} catch (Exception e) {
-//					continue;
-//				}
-//				if (c < 1 | c > 10)
-//					continue;
-//				else if (c == 2) {
-//					
-//				} else if (c == 3) {
-//					
-//				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -109,14 +92,15 @@ public class UotelDriver {
 					con.closeConnection();
 				}
 
-				catch (Exception e) {}
+				catch (Exception e) {
+				}
 			}
 		}
 	}
 
 	/**
 	 * This method drives the application once the user has established a
-	 * connection.
+	 * connection and logged in.
 	 * 
 	 * @param usr
 	 * @throws IOException
@@ -132,6 +116,10 @@ public class UotelDriver {
 				c = Integer.parseInt(choice);
 			} catch (Exception e) {
 				c = 100;
+			}
+			// Case for statistics
+			if (c <= 10 && c >= 8) {
+				viewStatistics(c, con, in, usr);
 			}
 			switch (c) {
 			case 0:
@@ -160,22 +148,55 @@ public class UotelDriver {
 			case 7:
 				// view similar users
 				break;
-			case 8:
-				// most popular by category
-				break;
-			case 9:
-				// most expensive by category
-				break;
-			case 10:
-				// highest rated by category
-				break;
 			default:
 				System.out.println("Please enter a valid option");
 				continue;
 			}
 		}
 	}
+
+	public static void viewStatistics(int choice, Connector con, BufferedReader in, User usr) throws IOException {
+		System.out.println("What is the max number of houses you would like displayed?");
+		while (true) {
+			String inNum = null;
+			while ((inNum = in.readLine()) == null && inNum.length() == 0)
+				;
+			int num = -1;
+			try {
+				num = Integer.parseInt(inNum);
+			} catch (Exception e) {
+				System.out.println("Please input a valid number");
+				continue;
+			}
+			switch(choice){
+			case 8:
+				//choice for most popular
+				break;
+			case 9:
+				//choice for most expensive
+				break;
+			case 10:
+				//choice for highest rated
+				break;
+			}
+		}
+	}
 	
+	/**
+	 * This method is called whenever a list of THs are displayed
+	 * to the user. This will allow the user to select one of the THs
+	 * displayed to them to either leave a review, make a reservation, 
+	 * or document a stay.
+	 * 
+	 * @param ths
+	 * @param con
+	 * @param in
+	 * @param usr
+	 */
+	public static void viewTHs(ArrayList<TH> ths, Connector con, BufferedReader in, User usr){
+		
+	}
+
 	/***
 	 * This method handles a user inserting a new TH into the database.
 	 * 
@@ -184,49 +205,49 @@ public class UotelDriver {
 	 * @param usr
 	 * @throws IOException
 	 */
-	public static void handleListing(Connector con, BufferedReader in, User usr) throws IOException{
+	public static void handleListing(Connector con, BufferedReader in, User usr) throws IOException {
 		// Gather up information for a new TH. #SWAG
 		// TODO: Get price instead of hardcoding it.
 		Querys q = new Querys();
 		String category, year_built, name, address, phone, url, string_price;
 		int price = 0;
-		
+
 		System.out.println("Please enter th category:");
-		while ((category = in.readLine()) == null || category.length() == 0){
+		while ((category = in.readLine()) == null || category.length() == 0) {
 			System.out.println("Invalid response please try again.");
 		}
-		
+
 		System.out.println("Please enter year th was built:");
-		while ((year_built = in.readLine()) == null || year_built.length() == 0){
+		while ((year_built = in.readLine()) == null || year_built.length() == 0) {
 			System.out.println("Invalid response please try again.");
 		}
 
 		System.out.println("Please enter name of TH:");
-		while ((name = in.readLine()) == null || name.length() == 0){
+		while ((name = in.readLine()) == null || name.length() == 0) {
 			System.out.println("Invalid response please try again.");
 		}
 
 		System.out.println("Please enter th phone:");
-		while ((phone = in.readLine()) == null || phone.length() == 0){
+		while ((phone = in.readLine()) == null || phone.length() == 0) {
 			System.out.println("Invalid response please try again.");
 		}
-		
+
 		System.out.println("Please enter your address:");
-		while ((address = in.readLine()) == null || address.length() == 0){
+		while ((address = in.readLine()) == null || address.length() == 0) {
 			System.out.println("Invalid response please try again.");
 		}
 
 		System.out.println("Please enter your url:");
-		while ((url = in.readLine()) == null || url.length() == 0){
+		while ((url = in.readLine()) == null || url.length() == 0) {
 			System.out.println("Invalid response please try again.");
 		}
-		
+
 		System.out.println("Please enter price of TH per night:");
-		while ((string_price = in.readLine()) == null || string_price.length() == 0 || price <= 0){
-			try{
+		while ((string_price = in.readLine()) == null || string_price.length() == 0 || price <= 0) {
+			try {
 				price = Integer.parseInt(string_price);
 				break;
-			}catch(Exception e){
+			} catch (Exception e) {
 				System.out.println("Please provide a number.");
 				continue;
 			}
@@ -234,7 +255,7 @@ public class UotelDriver {
 
 		q.newTh(category, year_built, name, address, url, phone, price, usr, con.con);
 	}
-	
+
 	/***
 	 * This method handles a user wanting to change a listing.
 	 * 
@@ -243,20 +264,20 @@ public class UotelDriver {
 	 * @param usr
 	 * @throws IOException
 	 */
-	public static void handleListingChange(Connector con, BufferedReader in, User usr) throws IOException{
+	public static void handleListingChange(Connector con, BufferedReader in, User usr) throws IOException {
 		// Gather up th's.
 		Querys q = new Querys();
 		ArrayList<TH> currentUsersTH = q.getUsersTHs(usr.getLogin(), con.stmt);
-		
-		//If user has no current th's.
-		if(currentUsersTH.isEmpty()){
+
+		// If user has no current th's.
+		if (currentUsersTH.isEmpty()) {
 			System.out.println("You currently have no TH's to modify please come back at another time.");
 			return;
 		}
-		
+
 		System.out.println("Current TH's you have listed:");
 		int count = 1;
-		for(TH th: currentUsersTH){
+		for (TH th : currentUsersTH) {
 			System.out.println("TH number:" + count);
 			System.out.println("   With Values: " + th.toString());
 			count++;
@@ -265,19 +286,19 @@ public class UotelDriver {
 		// Get thg user wants to update.
 		System.out.println("Please type in the number of the th you want to update: ");
 		int index = -1;
-		while(true){
-			try{
+		while (true) {
+			try {
 				index = Integer.parseInt(in.readLine());
-				if(index > currentUsersTH.size() || index < 1){
+				if (index > currentUsersTH.size() || index < 1) {
 					System.out.println("Please try again invalid th.");
 					continue;
 				}
 				break;
-			}catch(Exception e){
+			} catch (Exception e) {
 				System.out.println("Please try again invalid th.");
 			}
 		}
-		
+
 		// Get th to update.
 		TH thToBeUpdated = currentUsersTH.get(--index);
 		System.out.println("Current values of TH you are updating: " + thToBeUpdated.toString());
@@ -285,10 +306,10 @@ public class UotelDriver {
 		thToBeUpdated = gatherUpdates(thToBeUpdated, in, con.stmt);
 		q.updateTH(thToBeUpdated, con.con);
 	}
-	
+
 	/***
-	 * This method prompts the user to give details of a new TH and 
-	 * creates a temporary house object out of that information.
+	 * This method prompts the user to give details of a new TH and creates a
+	 * temporary house object out of that information.
 	 * 
 	 * @param toUpdate
 	 * @param in
@@ -382,10 +403,10 @@ public class UotelDriver {
 				case "9":
 				case "Keywords":
 					System.out.println("Please enter a keyword to add to your TH");
-					while ((updateValue = in.readLine()) == null || updateValue.length() == 0){
+					while ((updateValue = in.readLine()) == null || updateValue.length() == 0) {
 						System.out.println("Please provide a valid keyword");
 					}
-					//Add keyword given by the user.
+					// Add keyword given by the user.
 					q.addKeywordToHID(updateValue, toUpdate.getHid(), stmt);
 					break;
 				case "10":
@@ -402,7 +423,7 @@ public class UotelDriver {
 		}
 		return toUpdate;
 	}
-	
+
 	/**
 	 * Prompt for login page
 	 */

@@ -11,8 +11,6 @@ public class Querys {
 	public Querys() {
 	}
 	
-	
-	
 	public TH newTh(String category, String year_built, String name, String address, String url, String phone,
 			int price, User current_user, Connection con) {
 		try {
@@ -259,7 +257,8 @@ public class Querys {
 			System.out.println("Cannot execute the query.");
 			return;
 		}
-
 	}
+	
+	public ArrayList<TH> 
 
 }
