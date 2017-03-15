@@ -1,4 +1,6 @@
 import java.io.*;
+import java.sql.Date;
+import java.text.DateFormat;
 import java.util.ArrayList;
 
 public class UotelDriver {
@@ -220,6 +222,8 @@ public class UotelDriver {
 							System.out.println("Please provided a valid hid");
 							continue;
 						}
+						
+						thToBeUpdated = gatherUpdates(thToBeUpdated, in);
 						q.updateTH(thToBeUpdated, con.con);
 					}
 
@@ -237,6 +241,88 @@ public class UotelDriver {
 					/* ignore close errors */}
 			}
 		}
+	}
+	
+	public static TH gatherUpdates(TH toUpdate, BufferedReader in){
+		System.out.println("Updatable Fields:");
+		System.out.println("Category");
+		System.out.println("Price");
+		System.out.println("Year_Built");
+		System.out.println("Name");
+		System.out.println("Address");
+		System.out.println("Url");
+		System.out.println("Phone");
+		System.out.println("Date_Listed");
+		System.out.println("Type 'Done' when you are finished updating");
+		String response = "";
+		String updateValue = null;
+		try {
+			while (!response.equals("Done")) {
+				System.out.println("Please enter name of value you want to update.");
+				response = in.readLine();
+				switch (response) {
+				case "Category":
+					System.out.println("Enter new Category");
+					while ((updateValue = in.readLine()) == null && updateValue.length() == 0);
+					toUpdate.setCategory(updateValue);
+					break;
+				case "Price":
+					System.out.println("Enter new Price");
+					while ((updateValue = in.readLine()) == null && updateValue.length() == 0);
+					toUpdate.setPrice(Integer.parseInt(updateValue));
+					break;
+				case "Year_Built":
+					System.out.println("Enter new Year_Built");
+					while ((updateValue = in.readLine()) == null && updateValue.length() == 0);
+					if(updateValue.length() < 5){
+						toUpdate.setYear_built((updateValue));
+					}else{
+						System.out.println("Year value cant be greater than 4 digits.");
+					}
+					break;
+				case "Name":
+					System.out.println("Enter new Name");
+					while ((updateValue = in.readLine()) == null && updateValue.length() == 0);
+					toUpdate.setName(updateValue);
+					break;
+				case "Address":
+					System.out.println("Enter new Address");
+					while ((updateValue = in.readLine()) == null && updateValue.length() == 0);
+					toUpdate.setAddress(updateValue);
+					break;
+				case "Url":
+					System.out.println("Enter new URL");
+					while ((updateValue = in.readLine()) == null && updateValue.length() == 0);
+					toUpdate.setUrl(updateValue);
+					break;
+				case "Phone":
+					System.out.println("Enter new Phone");
+					while ((updateValue = in.readLine()) == null && updateValue.length() == 0);
+					if(updateValue.length() < 11){
+						toUpdate.setPhone((updateValue));
+					}else{
+						System.out.println("Phone value cant be greater than 10  digits.");
+					}
+					break;
+				case "Date_Listed":
+					System.out.println("Enter new category");
+					while ((updateValue = in.readLine()) == null && updateValue.length() == 0);
+					toUpdate.setDate_listed(Date.valueOf(updateValue));
+					break;
+				case "Done":
+					System.out.println("Your changes will now be updated.");
+					return toUpdate;
+				default:
+					System.out.print("Didnt match any updatable values. Please try again.");
+				}
+			}
+		} catch (Exception e) {
+			System.out.println("Something went wrong updating values. Pleas try again.");
+			return null;
+		}
+		
+		return toUpdate;
+
 	}
 
 	public static void handleUser(User usr) {

@@ -79,6 +79,7 @@ public class Querys {
 			
 			//TODO: Still need to update values they want.
 			
+			
 			updateTH.setString(1, update.getCategory());
 			updateTH.setInt(2, update.getPrice());
 			updateTH.setString(3, update.getYear_built());
