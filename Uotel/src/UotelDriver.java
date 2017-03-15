@@ -142,7 +142,8 @@ public class UotelDriver {
 				// case for recording a stay
 				break;
 			case 5:
-				// search for a house
+				// case for browsing
+				handleBrowsing(con, in, usr);
 				break;
 			case 6:
 				// view suggested houses
@@ -151,14 +152,14 @@ public class UotelDriver {
 				// view similar users
 				break;
 			case 11:
-				//Most trusted.
-				if(usr.isAdmin()){
+				// Most trusted.
+				if (usr.isAdmin()) {
 					handleMostTrusted(in, con.stmt);
 					break;
 				}
 			case 12:
-				//Most useful.
-				if(usr.isAdmin()){
+				// Most useful.
+				if (usr.isAdmin()) {
 					handleMostUseful(in, con.stmt);
 					break;
 				}
@@ -168,19 +169,19 @@ public class UotelDriver {
 			}
 		}
 	}
-	
-	
+
 	/**
-	 * This method retrieves the most trusted users with the help of the querys class, and then
-	 * displays them to the admin user.
+	 * This method retrieves the most trusted users with the help of the querys
+	 * class, and then displays them to the admin user.
+	 * 
 	 * @param in
 	 * @param stmt
 	 */
-	public static void handleMostTrusted(BufferedReader in, Statement stmt){
+	public static void handleMostTrusted(BufferedReader in, Statement stmt) {
 		int limit;
 		while (true) {
 			try {
-				//Check to see if the user wants to go back.
+				// Check to see if the user wants to go back.
 				System.out.println("Please provide a limit on the amout of users you want returned.");
 				limit = Integer.parseInt(in.readLine());
 				if (limit < 1) {
@@ -192,31 +193,32 @@ public class UotelDriver {
 				System.out.println("Please try again with a valid number.");
 			}
 		}
-		
+
 		Querys q = new Querys();
 		ArrayList<String> loginList = q.mostTrusted(limit, stmt);
 		System.out.println("Most trusted users:");
 		int count = 1;
-		for(String login : loginList){
+		for (String login : loginList) {
 			System.out.println(Integer.toString(count) + "." + login);
 			count++;
 		}
 		System.out.println("-----------------------------");
 		return;
 	}
-	
+
 	/**
-	 * This method retrieves the most useful users with the help of the querys class, and then
-	 * displays them to the admin user.
+	 * This method retrieves the most useful users with the help of the querys
+	 * class, and then displays them to the admin user.
+	 * 
 	 * @param in
 	 * @param stmt
 	 */
-	public static void handleMostUseful(BufferedReader in, Statement stmt){
+	public static void handleMostUseful(BufferedReader in, Statement stmt) {
 		int limit;
 		System.out.println("What is the max number of houses you would like displayed?");
 		while (true) {
 			try {
-				//Check to see if the user wants to go back.
+				// Check to see if the user wants to go back.
 				limit = Integer.parseInt(in.readLine());
 				if (limit < 1) {
 					System.out.println("Please try again limit must be 1 or greater.");
@@ -227,12 +229,12 @@ public class UotelDriver {
 				System.out.println("Please try again with a valid number.");
 			}
 		}
-		
+
 		Querys q = new Querys();
 		ArrayList<String> loginList = q.mostUseful(limit, stmt);
 		System.out.println("Most useful users:");
 		int count = 1;
-		for(String login : loginList){
+		for (String login : loginList) {
 			System.out.println(Integer.toString(count) + "." + login);
 			count++;
 		}
@@ -382,14 +384,15 @@ public class UotelDriver {
 			}
 		}
 	}
-	
+
 	/**
-	 * Method used to handle when a TH has been choosen by a user to view, and either
-	 * favorite, rate, or view stuff about it.
+	 * Method used to handle when a TH has been choosen by a user to view, and
+	 * either favorite, rate, or view stuff about it.
+	 * 
 	 * @param thInQuestion
 	 * @param in
 	 */
-	public static void handleHousingOptions(TH thInQuestion, BufferedReader in){
+	public static void handleHousingOptions(TH thInQuestion, BufferedReader in) {
 		String response = null;
 		try {
 			while (!response.equals("Done")) {
@@ -398,22 +401,22 @@ public class UotelDriver {
 				response = in.readLine();
 				switch (response) {
 				case "1":
-					//favorite
+					// favorite
 					break;
 				case "2":
-					//feed back
+					// feed back
 					break;
 				case "3":
-					//give feed back
+					// give feed back
 					break;
 				case "4":
-					//make a res.
+					// make a res.
 					break;
 				case "5":
-					//record a stay
+					// record a stay
 					break;
 				case "6":
-					//get feedback
+					// get feedback
 					break;
 				case "7":
 					return;
@@ -484,6 +487,130 @@ public class UotelDriver {
 		}
 
 		q.newTh(category, year_built, name, address, url, phone, price, usr, con.con);
+	}
+
+	/***
+	 * This method provides functionality for a user to browse THs by a price
+	 * range and/or city and/or state and/or categories and/or keywords. The
+	 * user then will have the option to sort by price, average rating, or
+	 * average rating by trusted users.
+	 * 
+	 * @param con
+	 * @param in
+	 * @param usr
+	 * @throws IOException
+	 */
+	public static void handleBrowsing(Connector con, BufferedReader in, User usr) throws IOException {
+		int maxPrice = -1;
+		int minPrice = -1;
+		int sort = -1;
+		String city = null;
+		String state = null;
+		String keyword = null;
+		String category = null;
+		String prompt = null;
+		String error = null;
+
+		// Get the max price value
+		prompt = "Please enter a maximum price [no preference]";
+		error = "Please enter a valid option";
+		maxPrice = promptForInt(in, prompt, error, 0, Integer.MAX_VALUE, true);
+		
+		// Get the min price value
+		prompt = "Please enter a minimum price [no preference]";
+		minPrice = promptForInt(in, prompt, error, 0, maxPrice, true);
+		
+		// Get the City
+		prompt = "Please enter a city [no preference]";
+		city = promptForString(in, prompt, error, true);
+		
+		// Get the State
+		prompt = "Please enter a state [no preference]";
+		state = promptForString(in, prompt, error, true);
+		
+		// Get a keyword
+		prompt = "Please enter a keyword [no preference]";
+		keyword = promptForString(in, prompt, error, true);
+		
+		// Get a category
+		prompt = "Please enter a category [no preference]";
+		category = promptForString(in, prompt, error, true);
+		
+		// Get sort value
+		displayHouseFilters();
+		prompt = "Please pick a filter";
+		error = "Please choose a valid option";
+		sort = promptForInt(in, prompt, error, 1, 4, false);
+		
+		Querys q = new Querys();
+		ArrayList<TH> retList = q.browse(con.stmt, maxPrice, minPrice, city, state, keyword, category, sort);
+		viewTHs(retList, con, in, usr, false);
+	}
+
+	/**
+	 * This method prompts the user for an int using the prompt parameter you
+	 * send it. It ensures the value obtained is within a range and not null
+	 * (unless specified) or prints the provided the error message and tries
+	 * again.
+	 * 
+	 * @param in
+	 * @throws IOException
+	 */
+	public static int promptForInt(BufferedReader in, String prompt, String error, int min, int max, boolean nullable)
+			throws IOException {
+		System.out.println(prompt);
+		while (true) {
+			String tempString = null;
+			while ((tempString = in.readLine()) == null)
+				;
+			if (tempString.trim().length() == 0 && nullable)
+				return -1;
+			else {
+				int retVal = -1;
+				try {
+					retVal = Integer.parseInt(tempString);
+					if (retVal >= min && retVal <= max) {
+						return retVal;
+					} else {
+						System.out.println(error);
+						continue;
+					}
+				} catch (Exception e) {
+					System.out.println(error);
+					continue;
+				}
+			}
+		}
+	}
+
+	/***
+	 * Prompts the user for a string value with the provided prompt.
+	 * If nullable is specified, a user may enter nothing.
+	 * If nullable is false and an input string is empty, gives the  
+	 * user the provided error and tries again.
+	 * 
+	 * @param in
+	 * @param prompt
+	 * @param error
+	 * @param nullable
+	 * @return the input string from the user
+	 * @throws IOException
+	 */
+	public static String promptForString(BufferedReader in, String prompt, String error, boolean nullable)
+			throws IOException {
+		System.out.println(prompt);
+		while (true) {
+			String tempString = null;
+			while ((tempString = in.readLine()) == null)
+				;
+			if (tempString.trim().length() == 0 && nullable)
+				return null;
+			else if (tempString.trim().length() == 0){
+				System.out.println(error);
+				continue;
+			}
+			return tempString;
+		}
 	}
 
 	/***
@@ -690,13 +817,11 @@ public class UotelDriver {
 	 * Options for a way to filter search results
 	 */
 	public static void displayHouseFilters() {
-		System.out.println("       Select a Filter       ");
-		System.out.println("1. Sort by price: high to low");
-		System.out.println("2. Sort by price: low to high");
-		System.out.println("3. Highest rated");
-		System.out.println("4. Highest rated by trusted users");
-		System.out.println("5. No filter");
-		System.out.println("6. Back");
+		System.out.println("       Select a Sort       ");
+		System.out.println("1. Sort by price");
+		System.out.println("2. Highest rated");
+		System.out.println("3. Highest rated by trusted users");
+		System.out.println("4. No filter");
 	}
 
 	/**
