@@ -1,5 +1,6 @@
 import java.io.*;
 import java.sql.Date;
+import java.sql.Statement;
 import java.text.DateFormat;
 import java.util.ArrayList;
 
@@ -17,7 +18,8 @@ public class UotelDriver {
 		Connector con = null;
 		String choice;
 		User current_user = null;
-
+		
+		
 		int c = 0;
 		try {
 			con = new Connector();
@@ -46,10 +48,8 @@ public class UotelDriver {
 						;
 					User usr = q.loginUser(login, password, con.stmt);
 					if (usr != null) {
-						current_user = usr;
 						applicationDriver(con, in, usr);
 					}
-
 					// Case for creating a new account
 				} else if (c == 2) {
 					String login, password, name, address, phone;
@@ -74,10 +74,8 @@ public class UotelDriver {
 
 					User user = q.newUser(login, name, password, address, phone, false, con.stmt);
 					if (user != null) {
-						current_user = user;
 						applicationDriver(con, in, user);
 					}
-					;
 					// TODO: handle the case for creating an account
 				} else if (c == 3)
 					return;
@@ -87,21 +85,21 @@ public class UotelDriver {
 
 					break;
 				}
-				displayOperations();
-				while ((choice = in.readLine()) == null && choice.length() == 0)
-					;
-				try {
-					c = Integer.parseInt(choice);
-				} catch (Exception e) {
-					continue;
-				}
-				if (c < 1 | c > 10)
-					continue;
-				else if (c == 2) {
-					
-				} else if (c == 3) {
-					
-				}
+//				displayOperations();
+//				while ((choice = in.readLine()) == null && choice.length() == 0)
+//					;
+//				try {
+//					c = Integer.parseInt(choice);
+//				} catch (Exception e) {
+//					continue;
+//				}
+//				if (c < 1 | c > 10)
+//					continue;
+//				else if (c == 2) {
+//					
+//				} else if (c == 3) {
+//					
+//				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -124,8 +122,8 @@ public class UotelDriver {
 	 * @throws IOException
 	 */
 	public static void applicationDriver(Connector con, BufferedReader in, User usr) throws IOException {
-		displayOperations();
 		while (true) {
+			displayOperations();
 			String choice = null;
 			while ((choice = in.readLine()) == null && choice.length() == 0)
 				;
@@ -138,7 +136,7 @@ public class UotelDriver {
 			switch (c) {
 			case 0:
 				// case for logout
-				break;
+				return;
 			case 1:
 				// Case for reservation
 				break;
@@ -190,30 +188,51 @@ public class UotelDriver {
 		// Gather up information for a new TH. #SWAG
 		// TODO: Get price instead of hardcoding it.
 		Querys q = new Querys();
-		String category, year_built, name, address, phone, url, price;
-		System.out.println("please enter th category:");
-		while ((category = in.readLine()) == null && category.length() == 0)
-			;
-		System.out.println("please enter year th was built:");
-		while ((year_built = in.readLine()) == null && year_built.length() == 0)
-			;
+		String category, year_built, name, address, phone, url, string_price;
+		int price = 0;
+		
+		System.out.println("Please enter th category:");
+		while ((category = in.readLine()) == null || category.length() == 0){
+			System.out.println("Invalid response please try again.");
+		}
+		
+		System.out.println("Please enter year th was built:");
+		while ((year_built = in.readLine()) == null || year_built.length() == 0){
+			System.out.println("Invalid response please try again.");
+		}
 
-		System.out.println("please enter name of th.:");
-		while ((name = in.readLine()) == null && name.length() == 0)
-			;
+		System.out.println("Please enter name of TH:");
+		while ((name = in.readLine()) == null || name.length() == 0){
+			System.out.println("Invalid response please try again.");
+		}
 
-		System.out.println("please enter th phone:");
-		while ((phone = in.readLine()) == null && phone.length() == 0)
-			;
-		System.out.println("please enter your address:");
-		while ((address = in.readLine()) == null && address.length() == 0)
-			;
+		System.out.println("Please enter th phone:");
+		while ((phone = in.readLine()) == null || phone.length() == 0){
+			System.out.println("Invalid response please try again.");
+		}
+		
+		System.out.println("Please enter your address:");
+		while ((address = in.readLine()) == null || address.length() == 0){
+			System.out.println("Invalid response please try again.");
+		}
 
-		System.out.println("please enter your phone:");
-		while ((url = in.readLine()) == null && url.length() == 0)
-			;
+		System.out.println("Please enter your url:");
+		while ((url = in.readLine()) == null || url.length() == 0){
+			System.out.println("Invalid response please try again.");
+		}
+		
+		System.out.println("Please enter price of TH per night:");
+		while ((string_price = in.readLine()) == null || string_price.length() == 0 || price <= 0){
+			try{
+				price = Integer.parseInt(string_price);
+				break;
+			}catch(Exception e){
+				System.out.println("Please provide a number.");
+				continue;
+			}
+		}
 
-		q.newTh(category, year_built, name, address, url, phone, 120, usr, con.con);
+		q.newTh(category, year_built, name, address, url, phone, price, usr, con.con);
 	}
 	
 	/***
@@ -228,33 +247,42 @@ public class UotelDriver {
 		// Gather up th's.
 		Querys q = new Querys();
 		ArrayList<TH> currentUsersTH = q.getUsersTHs(usr.getLogin(), con.stmt);
-		System.out.println("Current TH's you have listed:");
-		currentUsersTH.stream().forEach(s -> System.out.println((s.toString())));
-
-		// Get hid user wants to update.
-		System.out.println("Please type in the hid of the th you want to update: ");
-		String hid = null;
-		while ((hid = in.readLine()) == null && hid.length() == 0)
-			;
-		System.out.println("Selected hid: " + hid);
-
-		// Gather th that matches hid.
-		TH thToBeUpdated = null;
-		for (TH th : currentUsersTH) {
-			if (Integer.toString(th.getHid()).equals(hid)) {
-				thToBeUpdated = th;
-				break;
-			}
-		}
-
-		// Make sure th is their.
-		if (thToBeUpdated == null) {
-			System.out.println("Please provided a valid hid");
-			handleListingChange(con, in, usr);
+		
+		//If user has no current th's.
+		if(currentUsersTH.isEmpty()){
+			System.out.println("You currently have no TH's to modify please come back at another time.");
 			return;
 		}
+		
+		System.out.println("Current TH's you have listed:");
+		int count = 1;
+		for(TH th: currentUsersTH){
+			System.out.println("TH number:" + count);
+			System.out.println("   With Values: " + th.toString());
+			count++;
+		}
 
-		thToBeUpdated = gatherUpdates(thToBeUpdated, in);
+		// Get thg user wants to update.
+		System.out.println("Please type in the number of the th you want to update: ");
+		int index = -1;
+		while(true){
+			try{
+				index = Integer.parseInt(in.readLine());
+				if(index > currentUsersTH.size() || index < 1){
+					System.out.println("Please try again invalid th.");
+					continue;
+				}
+				break;
+			}catch(Exception e){
+				System.out.println("Please try again invalid th.");
+			}
+		}
+		
+		// Get th to update.
+		TH thToBeUpdated = currentUsersTH.get(--index);
+		System.out.println("Current values of TH you are updating: " + thToBeUpdated.toString());
+
+		thToBeUpdated = gatherUpdates(thToBeUpdated, in, con.stmt);
 		q.updateTH(thToBeUpdated, con.con);
 	}
 	
@@ -266,21 +294,23 @@ public class UotelDriver {
 	 * @param in
 	 * @return The TH object holding the information of the new TH
 	 */
-	public static TH gatherUpdates(TH toUpdate, BufferedReader in) {
-		System.out.println("Updatable Fields:");
-		System.out.println("Category");
-		System.out.println("Price");
-		System.out.println("Year_Built");
-		System.out.println("Name");
-		System.out.println("Address");
-		System.out.println("Url");
-		System.out.println("Phone");
-		System.out.println("Date_Listed");
-		System.out.println("Type 'Done' when you are finished updating");
+	public static TH gatherUpdates(TH toUpdate, BufferedReader in, Statement stmt) {
 		String response = "";
 		String updateValue = null;
+		Querys q = new Querys();
 		try {
 			while (!response.equals("Done")) {
+				System.out.println("Updatable Fields:");
+				System.out.println("Category");
+				System.out.println("Price");
+				System.out.println("Year_Built");
+				System.out.println("Name");
+				System.out.println("Address");
+				System.out.println("Url");
+				System.out.println("Phone");
+				System.out.println("Date_Listed");
+				System.out.println("Keywords");
+				System.out.println("Done (When you want to stop updating)");
 				System.out.println("Please enter name of value you want to update.");
 				response = in.readLine();
 				switch (response) {
@@ -340,6 +370,14 @@ public class UotelDriver {
 					while ((updateValue = in.readLine()) == null && updateValue.length() == 0)
 						;
 					toUpdate.setDate_listed(Date.valueOf(updateValue));
+					break;
+				case "Keywords":
+					System.out.println("Please enter a keyword to add to your TH");
+					while ((updateValue = in.readLine()) == null || updateValue.length() == 0){
+						System.out.println("Please provide a valid keyword");
+					}
+					//Add keyword given by the user.
+					q.addKeywordToHID(updateValue, toUpdate.getHid(), stmt);
 					break;
 				case "Done":
 					System.out.println("Your changes will now be updated.");

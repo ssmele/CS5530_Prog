@@ -66,6 +66,13 @@ public class Querys {
 		}catch(Exception e){
 			System.out.println("cannot execute query: " + sql);
 			return null;
+		}finally {
+			try {
+				if (rs != null && !rs.isClosed())
+					rs.close();
+			} catch (Exception e) {
+				System.out.println("cannot close resultset");
+			}
 		}
 		
 		return thList;
@@ -127,8 +134,6 @@ public class Querys {
 		return new User(login, password, user_type);
 	}
 	
-	
-
 	public User loginUser(String login, String password, Statement stmt) {
 		// Construct sql select statement.
 		String sql = "select * from user where login = '" + login + "' and password = '" + password + "';";
@@ -165,6 +170,96 @@ public class Querys {
 		return null;
 	}
 	
+	public void trustUser(String trustee, String truster, boolean trust, Statement stmt){
+		String sql = "insert into trust VALUES (" + "'" + trustee + "','" + truster + "', " + trust + ")";
+		System.out.println("Executing:" + sql);
+		
+		try{
+			stmt.executeUpdate(sql);
+			System.out.println(truster + " now " + (trust ? "does " : "dosn't ") + trustee);
+		}catch(java.sql.SQLIntegrityConstraintViolationException e){
+			System.out.println("One of the user logins provided does not exist.");
+			return;
+		}catch(Exception e){
+			System.out.println("Cannot execute the query.");
+			return;
+		}
+	}
 	
+	public void favoriteTH(int hid, String login, Date fv_date, Statement stmt){
+		String sql = "insert into favorite VALUES (" + Integer.toString(hid) + ",'" + login + "', " + fv_date.toString() + ")";
+		System.out.println("Executing:" + sql);
+		
+		try{
+			stmt.executeUpdate(sql);
+			System.out.println(login + " now favorites " + "TH with hid of " + Integer.toString(hid));
+		}catch(java.sql.SQLIntegrityConstraintViolationException e){
+			System.out.println("User login, or hid does not exist.");
+			return;
+		}catch(Exception e){
+			System.out.println("Cannot execute the query.");
+			return;
+		}
+	}
+	
+	/**
+	 * This method takes in a keyword, and hid to associate it with. First adds the keyword to the database.
+	 * It will attempt the add every time even if its already in their as we don't know if its in it already or not.
+	 * It will then query for the keyword to get the appropriate wid from it.
+	 * It then adds the relationship between keyword and hid to the has_keyword table.
+	 * @param keyword
+	 * @param hid
+	 * @param stmt
+	 */
+	public void addKeywordToHID(String keyword, int hid,  Statement stmt){
+		String insert_keyword_sql = "Insert into keyword (word) VALUES ('" + keyword + "');";
+		String select_sql = "Select * from keyword where word = '" + keyword + "';";
+		
+		//First make keyword if it doesnt already exist.
+		try{
+			stmt.executeUpdate(insert_keyword_sql);
+		}catch(java.sql.SQLIntegrityConstraintViolationException e){
+			//System.out.println("keyword already in database.");
+		}catch(Exception e){
+			System.out.println("Keyword already exisits query could not be preformed.");
+			return;
+		}
+		
+		//Get the wid now by querying for keyword that equals word.
+		ResultSet rs = null;
+		int wid = -1;
+		//Next key keyword
+		try{
+			rs = stmt.executeQuery(select_sql);
+			while (rs.next()) {
+				wid = rs.getInt("wid");
+			}
+			rs.close();
+		}catch(Exception e){
+			System.out.println("cannot execute query: " + select_sql);
+			return;
+		} finally {
+			try {
+				if (rs != null && !rs.isClosed())
+					rs.close();
+			} catch (Exception e) {
+				System.out.println("cannot close resultset");
+			}
+		}
+
+		// First make keyword if it doesn't already exist.
+		String insert_has_keyword_sql = "Insert into has_keyword VALUES (" + Integer.toString(hid) + ", " + Integer.toString(wid) + ");";
+		try {
+			stmt.executeUpdate(insert_has_keyword_sql);
+			System.out.println("Successfully added keyword to th. \n-------------------------------------------");
+		} catch (java.sql.SQLIntegrityConstraintViolationException e) {
+			System.out.println("Current TH already has this keyword associated to it. \n-------------------------------------------");
+			return;
+		} catch (Exception e) {
+			System.out.println("Cannot execute the query.");
+			return;
+		}
+
+	}
 
 }
