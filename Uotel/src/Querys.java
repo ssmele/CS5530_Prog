@@ -545,6 +545,56 @@ public class Querys {
 
 		return loginList;
 	}
+	
+	/***
+	 * This method takes in the user and the TH they just reserved 
+	 * and finds suggested THs by finding ones where other visitors 
+	 * have visited it and the reserved TH. This method returns that 
+	 * list in order of most number of visits per TH.
+	 * 
+	 * @param stmt
+	 * @param reserved
+	 * @param usr
+	 * @return an array of suggested THs sorted by number of visits
+	 */
+	public ArrayList<TH> getSuggestedTHS(Statement stmt, TH reserved, User usr){
+		String sql = "SELECT * FROM th t, "
+				+ "(SELECT v2.h_id, COUNT(v2.h_id) AS 'cnt' "
+				+ "FROM (SELECT * FROM visit v "
+				+ "NATURAL JOIN reserve r "
+				+ "WHERE r.login != '" + usr.getLogin() + "') AS v1, "
+				+ "(SELECT * FROM visit v "
+				+ "NATURAL JOIN reserve r "
+				+ "WHERE r.login != '" + usr.getLogin() + "') AS v2 "
+				+ "WHERE v1.login = v2.login AND v1.h_id = " + reserved.getHid() + " "
+				+ "AND v1.h_id != v2.h_id "
+				+ "GROUP BY v2.h_id) AS v "
+				+ "WHERE t.hid = v.h_id "
+				+ "ORDER BY v.cnt DESC;";
+		ResultSet rs = null;
+		ArrayList<TH> thList = new ArrayList<TH>();
+		try {
+			rs = stmt.executeQuery(sql);
+			while (rs.next()) {
+				TH tempTH = new TH(rs.getInt("hid"), rs.getString("category"), rs.getInt("price"),
+						rs.getString("year_built"), rs.getString("name"), rs.getString("address"), rs.getString("url"),
+						rs.getString("phone"), rs.getString("login"), rs.getDate("date_listed"));
+				thList.add(tempTH);
+			}
+			rs.close();
+		} catch (Exception e) {
+			System.out.println("cannot execute query: " + sql);
+			return null;
+		} finally {
+			try {
+				if (rs != null && !rs.isClosed())
+					rs.close();
+			} catch (Exception e) {
+				System.out.println("cannot close resultset");
+			}
+		}
+		return thList;
+	}
 
 	/***
 	 * @param max

@@ -120,7 +120,7 @@ public class UotelDriver {
 				c = 100;
 			}
 			// Case for statistics
-			if (c <= 10 && c >= 8) {
+			if (c <= 19 && c >= 7) {
 				viewStatistics(c, con, in, usr, reservationCart);
 			}
 			switch (c) {
@@ -146,19 +146,16 @@ public class UotelDriver {
 				handleBrowsing(con, in, usr, reservationCart);
 				break;
 			case 6:
-				// view suggested houses
-				break;
-			case 7:
 				// Determine two degree separation
 				handleSeparation(con, in);
 				break;
-			case 11:
+			case 10:
 				// Most trusted.
 				if (usr.isAdmin()) {
 					handleMostTrusted(in, con.stmt);
 					break;
 				}
-			case 12:
+			case 11:
 				// Most useful.
 				if (usr.isAdmin()) {
 					handleMostUseful(in, con.stmt);
@@ -386,17 +383,17 @@ public class UotelDriver {
 			}
 			ArrayList<TH> resultList = new ArrayList<TH>();
 			switch (choice) {
-			case 8:
+			case 7:
 				// choice for most popular
 				resultList = limitCategoryNum(q.getMostPopular(con.stmt), num);
 				viewTHs(resultList, con, in, usr, true, reservationCart);
 				return;
-			case 9:
+			case 8:
 				// choice for most expensive
 				resultList = limitCategoryNum(q.getMostExpensive(con.stmt), num);
 				viewTHs(resultList, con, in, usr, true, reservationCart);
 				return;
-			case 10:
+			case 9:
 				// choice for highest rated
 				resultList = limitCategoryNum(q.getHighestRated(con.stmt), num);
 				viewTHs(resultList, con, in, usr, true, reservationCart);
@@ -434,7 +431,7 @@ public class UotelDriver {
 		System.out.println("Currently selected TH: " + th.toString());
 		while (true) {
 			displayHouseOptions();
-			System.out.println("Select an option number or 0 to go back to the list (only back currently works)");
+			System.out.println("Select an option number or 0 to go back to the list");
 			String input = null;
 			while ((input = in.readLine()) == null || input.length() == 0)
 				;
@@ -599,6 +596,8 @@ public class UotelDriver {
 						  + " to " 
 				          + new_res.getTo().toString()
 				          + " for " + Integer.toString(new_res.getPrice_per_night()) + " a night!");
+		System.out.println("Here are a list of THs based on your reservation:");
+		viewTHs(q.getSuggestedTHS(con.stmt, th, usr), con, in, usr, false, reservationCart);
 	}
 	
 	/**
@@ -1205,14 +1204,13 @@ public class UotelDriver {
 		System.out.println("3. Alter a listing");
 		System.out.println("4. Record a stay");
 		System.out.println("5. Search for a house");
-		System.out.println("6. View suggested houses");
-		System.out.println("7. Determine two degree seperation");
-		System.out.println("8. View most popular houses by category");
-		System.out.println("9. View most expensive by category");
-		System.out.println("10. View highest rated by category");
+		System.out.println("6. Determine two degree seperation");
+		System.out.println("7. View most popular houses by category");
+		System.out.println("8. View most expensive by category");
+		System.out.println("9. View highest rated by category");
 		if (isAdmin) {
-			System.out.println("11. Top m 'trusted' users.");
-			System.out.println("12. Top m 'useful' users.");
+			System.out.println("10. Top m 'trusted' users.");
+			System.out.println("11. Top m 'useful' users.");
 		}
 	}
 
