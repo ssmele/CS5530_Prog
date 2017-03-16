@@ -2,6 +2,8 @@ import java.io.*;
 import java.sql.Date;
 import java.sql.Statement;
 import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.util.ArrayList;
 
 import sun.awt.image.PixelConverter.Ushort555Rgb;
@@ -329,13 +331,36 @@ public class UotelDriver {
 			}
 			if (num == 0)
 				return;
+			if (num == 1){
+				handleFavoriteTH(usr, th, in, con.stmt);
+			}
 			if (num == 6){
 				handleMostUsefulFeedback(th, in, con.stmt);
-				
 			}
+			
+			/*
+			System.out.println("1. Mark as favorite");
+			System.out.println("2. View feedback");
+			System.out.println("3. Give feedback");
+			System.out.println("4. Make a reservation");
+			System.out.println("5. Record a Stay");
+			System.out.println("6. Get most useful feedback");
+			*/
 		}
 	}
 
+	/**
+	 * Handler for when a user wants to favorite a TH.
+	 * @param usr
+	 * @param th
+	 * @param in
+	 * @param stmt
+	 */
+	public static void handleFavoriteTH(User usr, TH th, BufferedReader in, Statement stmt){
+		Querys q = new Querys();
+		q.favoriteTH(th, usr.getLogin(), Date.valueOf(LocalDate.now()), stmt);
+	}
+	
 	/**
 	 * THis method is used to get the most useful feed back for a certain th. Makes use of method in the Queries
 	 * class to do so.
@@ -709,6 +734,21 @@ public class UotelDriver {
 		q.updateTH(thToBeUpdated, con.con);
 	}
 
+	public static Date getDateFromUser(BufferedReader in){
+		Date userDate = null;
+		System.out.println("Please provide a date in the following format 'YYYY-mm-dd'");
+		while (true) {
+			try {
+				userDate = Date.valueOf(in.readLine());
+				break;
+			} catch (Exception e) {
+				System.out.println("Bad format please try again.");
+			}
+		}
+		
+		return userDate;
+	}
+	
 	/***
 	 * This method prompts the user to give details of a new TH and creates a
 	 * temporary house object out of that information.
@@ -797,10 +837,7 @@ public class UotelDriver {
 					break;
 				case "Date_Listed":
 				case "8":
-					System.out.println("Enter new category");
-					while ((updateValue = in.readLine()) == null && updateValue.length() == 0)
-						;
-					toUpdate.setDate_listed(Date.valueOf(updateValue));
+					toUpdate.setDate_listed(getDateFromUser(in));
 					break;
 				case "9":
 				case "Keywords":

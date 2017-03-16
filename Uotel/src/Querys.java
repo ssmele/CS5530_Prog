@@ -10,7 +10,20 @@ import java.sql.Connection;
 public class Querys {
 	public Querys() {
 	}
-
+	
+	/**
+	 * Takes in given information and persists a TH in the database with given values.
+	 * @param category
+	 * @param year_built
+	 * @param name
+	 * @param address
+	 * @param url
+	 * @param phone
+	 * @param price
+	 * @param current_user
+	 * @param con
+	 * @return
+	 */
 	public TH newTh(String category, String year_built, String name, String address, String url, String phone,
 			int price, User current_user, Connection con) {
 		try {
@@ -44,7 +57,13 @@ public class Querys {
 
 	}
 
-	public ArrayList<TH> getUsersTHs(String login, Statement stmt) {
+	/**
+	 * Gets the current TH's associated with the given user.
+	 * @param login
+	 * @param stmt
+	 * @return
+	 */
+	public ArrayList<TH> getUsersTHs(String login, Statement stmt){
 		String sql = "Select * from th where login = '" + login + "';";
 
 		System.out.println("executing: " + sql);
@@ -74,14 +93,18 @@ public class Querys {
 
 		return thList;
 	}
-
-	public TH updateTH(TH update, Connection con) {
+	
+	/**
+	 * Takes the given TH and updates the TH with the same hid in the database to the new values given.
+	 * @param update
+	 * @param con
+	 * @return
+	 */
+	public TH updateTH(TH update, Connection con){
 		try {
 			PreparedStatement updateTH = con.prepareStatement(
-					"update th set category=?, price = ?, year_built = ?, name = ?, address = ?, url = ?, phone = ?, login = ?, date_listed = ?"
-							+ "where hid = ?");
-
-			// TODO: Still need to update values they want.
+					"update th set category=?, price = ?, year_built = ?, name = ?, address = ?, url = ?, phone = ?, login = ?, date_listed = ?" +
+					"where hid = ?");
 
 			updateTH.setString(1, update.getCategory());
 			updateTH.setInt(2, update.getPrice());
@@ -95,8 +118,7 @@ public class Querys {
 			updateTH.setInt(10, update.getHid());
 
 			updateTH.executeUpdate();
-			// TODO: DOnt really know what exceptions could get thrown here need
-			// to do more experimenting.
+			// TODO: DOnt really know what exceptions could get thrown here.
 		} catch (java.sql.SQLIntegrityConstraintViolationException e) {
 			System.out.println("Something got messed up.");
 			return null;
@@ -108,6 +130,18 @@ public class Querys {
 		return update;
 	}
 
+	/**
+	 * This method takes the new user information and persists it into the database. Will then return the new User
+	 * in a User object. Will return null if a user already has taken the login.
+	 * @param login
+	 * @param name
+	 * @param password
+	 * @param address
+	 * @param phone
+	 * @param user_type
+	 * @param stmt
+	 * @return
+	 */
 	public User newUser(String login, String name, String password, String address, String phone, boolean user_type,
 			Statement stmt) {
 
@@ -128,7 +162,16 @@ public class Querys {
 
 		return new User(login, password, user_type);
 	}
-
+	
+	/**
+	 * This method attempts to find a column in the database where the login and password match.
+	 * If it does not find one it will return null. If it does it will return a user object that
+	 * has information representing the newly signed in user.
+	 * @param login
+	 * @param password
+	 * @param stmt
+	 * @return
+	 */
 	public User loginUser(String login, String password, Statement stmt) {
 		// Construct sql select statement.
 		String sql = "select * from user where login = '" + login + "' and password = '" + password + "';";
@@ -164,8 +207,16 @@ public class Querys {
 		}
 		return null;
 	}
-
-	public void trustUser(String trustee, String truster, boolean trust, Statement stmt) {
+	
+	/**
+	 * This method inserts column into trusts relationship table. This represents that a user trusts
+	 * or does not trust another user.
+	 * @param trustee
+	 * @param truster
+	 * @param trust
+	 * @param stmt
+	 */
+	public void trustUser(String trustee, String truster, boolean trust, Statement stmt){
 		String sql = "insert into trust VALUES (" + "'" + trustee + "','" + truster + "', " + trust + ")";
 		System.out.println("Executing:" + sql);
 
@@ -180,17 +231,24 @@ public class Querys {
 			return;
 		}
 	}
-
-	public void favoriteTH(int hid, String login, Date fv_date, Statement stmt) {
-		String sql = "insert into favorite VALUES (" + Integer.toString(hid) + ",'" + login + "', " + fv_date.toString()
-				+ ")";
-		System.out.println("Executing:" + sql);
-
-		try {
+	
+	/**
+	 * This method insert column into favorite relationship table. This represents
+	 * that a user favorites the given th.
+	 * @param th
+	 * @param login
+	 * @param fv_date
+	 * @param stmt
+	 */
+	public void favoriteTH(TH th, String login, Date fv_date, Statement stmt){
+		String sql = "insert into favorite VALUES (" + Integer.toString(th.getHid()) + ",'" + login + "', '" + fv_date.toString() + "')";
+		//System.out.println("Executing:" + sql);
+		
+		try{
 			stmt.executeUpdate(sql);
-			System.out.println(login + " now favorites " + "TH with hid of " + Integer.toString(hid));
-		} catch (java.sql.SQLIntegrityConstraintViolationException e) {
-			System.out.println("User login, or hid does not exist.");
+			System.out.println(login + " now favorites " + "TH with values " + th.toString() + "\n---------------------------------");
+		}catch(java.sql.SQLIntegrityConstraintViolationException e){
+			System.out.println("You already favorite this place. \n---------------------------------");
 			return;
 		} catch (Exception e) {
 			System.out.println("Cannot execute the query.");
