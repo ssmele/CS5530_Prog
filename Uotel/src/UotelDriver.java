@@ -205,7 +205,7 @@ public class UotelDriver {
 				count++;
 			}
 			
-			int value = promptForInt(in, "Type number of reservation you want to get rid of. If none press 0.", "Try again inavlid input", 0, reservationCart.size(), false);
+			int value = promptForInt(in, "Type number of visit you want to get rid of. If none press 0.", "Try again inavlid input", 0, reservationCart.size(), false);
 			if(value == 0){
 				break;
 			}else{
@@ -436,7 +436,7 @@ public class UotelDriver {
 			displayHouseOptions();
 			System.out.println("Select an option number or 0 to go back to the list (only back currently works)");
 			String input = null;
-			while ((input = in.readLine()) == null && input.length() == 0)
+			while ((input = in.readLine()) == null || input.length() == 0)
 				;
 			int num = -1;
 			try {
@@ -451,11 +451,10 @@ public class UotelDriver {
 				handleFavoriteTH(usr, th, in, con.stmt);
 			}
 			if (num == 2){
-				//TODO: Test rating is working.
 				handleViewFeedback(in, th, usr, con);
 			}
 			if (num == 3){
-				handleGiveFeedback(in, th, usr, con.stmt);
+				handleGiveFeedback(in, th, usr, con.con);
 			}
 			if (num == 4){
 				handleReservation(usr, th, in, con, reservationCart);
@@ -468,8 +467,26 @@ public class UotelDriver {
 	}
 	
 	//TODO: implement this thing WOO WOO SWAG!
-	public static void handleGiveFeedback(BufferedReader in, TH th, User usr, Statement stmt){
+	public static void handleGiveFeedback(BufferedReader in, TH th, User usr, Connection con) throws IOException{
+		// Get the max price value
+		String prompt, error, text;
+		prompt = "Please enter text describing your stay.";
+		error = "Please enter a valid option";
+		text = promptForString(in, prompt, error, false);
 		
+		//Get date for the 
+		//TODO: Should this be user inputed?
+		Date date;
+		prompt = "Please provide the date of this feedback.";
+		date = promptForDate(in);
+		
+		int score;
+		prompt = "Please enter a score (0 = terrible, 10 = excellent)";
+		score = promptForInt(in, prompt, error, 0, 10, false);
+	
+		//Once we have gather the info send off the request to insert this feedback in the table. 
+		Querys q = new Querys();
+		q.insertFeedback(usr, th, text, score, date, con);
 	}
 	
 	public static void handleViewFeedback(BufferedReader in, TH th, User usr, Connector con) throws IOException{
@@ -478,29 +495,30 @@ public class UotelDriver {
 		ArrayList<Feedback> feedbackList = new ArrayList<>();
 		feedbackList = q.getFeedbackTH(th, con.stmt);
 
-		// Ask user which one
-		int count = 1;
-		System.out.println("Feedback # | Feedback information");
-		for (Feedback feed : feedbackList) {
-			System.out.println(Integer.toString(count) + ".       | " + feed.toString());
-			count++;
-		}
-
-		// If its empty report to the user that theres nothing for them to do
-		// here.
-		if (feedbackList.isEmpty()) {
-			System.out.println("This TH has no feed back assocaited with it yet.");
-			return;
-		}
 		
 		while(true){
-			int feedbackNum = promptForInt(in, "If you want to rate one of the feedbacks below type its number. If you want to continue type 0:", "Invalid number", 1, feedbackList.size(), false);
+			// Ask user which one
+			int count = 1;
+			System.out.println("Feedback # | Feedback information");
+			for (Feedback feed : feedbackList) {
+				System.out.println(Integer.toString(count) + ".       | " + feed.toString());
+				count++;
+			}
+
+			// If its empty report to the user that theres nothing for them to do
+			// here.
+			if (feedbackList.isEmpty()) {
+				System.out.println("This TH has no feed back assocaited with it yet.");
+				return;
+			}
+			
+			int feedbackNum = promptForInt(in, "If you want to rate one of the feedbacks below type its number. If you want to continue type 0:", "Invalid number", 0, feedbackList.size(), false);
 			
 			if(feedbackNum == 0){
 				return;
 			}
 			
-			int rating = promptForInt(in, "Providing a rating please. 0-useless, 1-useful, 1-very useful.", "Invalid rating only 0-useless, 1-useful, 1-very useful", 0, 2, false);
+			int rating = promptForInt(in, "Providing a rating please. 0-useless, 1-useful, 2-very useful.", "Invalid rating only 0-useless, 1-useful, 1-very useful", 0, 2, false);
 			q.insertRating(usr, feedbackList.get(--feedbackNum).getFid(), rating, con.con);
 		}
 
@@ -1018,7 +1036,7 @@ public class UotelDriver {
 		TH thToBeUpdated = currentUsersTH.get(--index);
 		System.out.println("Current values of TH you are updating: " + thToBeUpdated.toString());
 
-		thToBeUpdated = gatherUpdates(thToBeUpdated, in, con.stmt);
+		thToBeUpdated = gatherUpdates(thToBeUpdated, in, con);
 		q.updateTH(thToBeUpdated, con.con);
 	}
 
@@ -1050,13 +1068,14 @@ public class UotelDriver {
 	 * @param in
 	 * @return The TH object holding the information of the new TH
 	 */
-	public static TH gatherUpdates(TH toUpdate, BufferedReader in, Statement stmt) {
+	public static TH gatherUpdates(TH toUpdate, BufferedReader in, Connector con) {
 		String response = "";
 		String updateValue = null;
 		Querys q = new Querys();
 		try {
 			while (!response.equals("Done")) {
 				System.out.println("Updatable Fields:");
+				System.out.println("0.Done (When you want to stop updating)");
 				System.out.println("1.Category");
 				System.out.println("2.Price");
 				System.out.println("3.Year_Built");
@@ -1066,7 +1085,7 @@ public class UotelDriver {
 				System.out.println("7.Phone");
 				System.out.println("8.Date_Listed");
 				System.out.println("9.Keywords");
-				System.out.println("10.Done (When you want to stop updating)");
+				System.out.println("10. Add availability)");
 				System.out.println("Please enter name or number of value you want to update.");
 				response = in.readLine();
 				switch (response) {
@@ -1074,21 +1093,21 @@ public class UotelDriver {
 				case "Category":
 					// TODO: They may need to select from a list of categories.
 					System.out.println("Enter new Category");
-					while ((updateValue = in.readLine()) == null && updateValue.length() == 0)
+					while ((updateValue = in.readLine()) == null || updateValue.length() == 0)
 						;
 					toUpdate.setCategory(updateValue);
 					break;
 				case "2":
 				case "Price":
 					System.out.println("Enter new Price");
-					while ((updateValue = in.readLine()) == null && updateValue.length() == 0)
+					while ((updateValue = in.readLine()) == null || updateValue.length() == 0)
 						;
 					toUpdate.setPrice(Integer.parseInt(updateValue));
 					break;
 				case "3":
 				case "Year_Built":
 					System.out.println("Enter new Year_Built");
-					while ((updateValue = in.readLine()) == null && updateValue.length() == 0)
+					while ((updateValue = in.readLine()) == null || updateValue.length() == 0)
 						;
 					if (updateValue.length() < 5) {
 						toUpdate.setYear_built((updateValue));
@@ -1099,28 +1118,28 @@ public class UotelDriver {
 				case "4":
 				case "Name":
 					System.out.println("Enter new Name");
-					while ((updateValue = in.readLine()) == null && updateValue.length() == 0)
+					while ((updateValue = in.readLine()) == null || updateValue.length() == 0)
 						;
 					toUpdate.setName(updateValue);
 					break;
 				case "5":
 				case "Address":
 					System.out.println("Enter new Address");
-					while ((updateValue = in.readLine()) == null && updateValue.length() == 0)
+					while ((updateValue = in.readLine()) == null || updateValue.length() == 0)
 						;
 					toUpdate.setAddress(updateValue);
 					break;
 				case "6":
 				case "Url":
 					System.out.println("Enter new URL");
-					while ((updateValue = in.readLine()) == null && updateValue.length() == 0)
+					while ((updateValue = in.readLine()) == null || updateValue.length() == 0)
 						;
 					toUpdate.setUrl(updateValue);
 					break;
 				case "7":
 				case "Phone":
 					System.out.println("Enter new Phone");
-					while ((updateValue = in.readLine()) == null && updateValue.length() == 0)
+					while ((updateValue = in.readLine()) == null || updateValue.length() == 0)
 						;
 					if (updateValue.length() < 11) {
 						toUpdate.setPhone((updateValue));
@@ -1139,9 +1158,19 @@ public class UotelDriver {
 						System.out.println("Please provide a valid keyword");
 					}
 					// Add keyword given by the user.
-					q.addKeywordToHID(updateValue, toUpdate.getHid(), stmt);
+					q.addKeywordToHID(updateValue, toUpdate.getHid(), con.stmt);
 					break;
 				case "10":
+				case "Add availability":
+					System.out.println("Please provide a from and a to date for this availability.");
+					Date from = promptForDate(in);
+					Date to = promptForDate(in);
+					int price_per_night = promptForInt(in, "Please provide a price_per_night during this availability", "Invalid entry please try again!", 
+													   1,Integer.MAX_VALUE, false);
+					
+					Period new_period = new Period(from, to, price_per_night);
+					q.insertAvailability(toUpdate, new_period, con);
+				case "0":
 				case "Done":
 					System.out.println("Your changes will now be updated.");
 					return toUpdate;

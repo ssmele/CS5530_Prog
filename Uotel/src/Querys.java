@@ -11,10 +11,163 @@ public class Querys {
 	public Querys() {
 	}
 
+	public void insertFeedback(User usr, TH th, String text, int score, Date date, Connection con){
+		
+		//First need to do checks to ensure user does nto own the th they are reviewing, and that they have not review this th before.
+		String ownershipCheck = "select * from th where th.hid = " + Integer.toString(th.getHid()) + " and th.login = '" + usr.getLogin() + "'";
+		String alreadyCheck = "select * from feedback where feedback.login = '" + usr.getLogin()+ "' and feedback.hid = " + Integer.toString(th.getHid()) + ";";
+		
+		
+		
+		//Checking for ownership.
+		ResultSet rs = null;
+		int count = 0;
+		try {
+			rs = con.createStatement().executeQuery(ownershipCheck);
+			while (rs.next()) {
+				count++;
+			}
+			rs.close();
+		} catch (Exception e) {
+			System.out.println("cannot execute query: " + ownershipCheck);
+			return;
+		} finally {
+			try {
+				if (rs != null && !rs.isClosed())
+					rs.close();
+			} catch (Exception e) {
+				System.out.println("cannot close resultset");
+			}
+		}
+		
+		if (count > 0){
+			System.out.println("You own this TH you cant leave it feedback.");
+			return;
+		}
+		
+		
+		//Checking to see if this user has already left a review.
+		rs = null;
+		count = 0;
+		try {
+			rs = con.createStatement().executeQuery(alreadyCheck);
+			while (rs.next()) {
+				count++;
+			}
+			rs.close();
+		} catch (Exception e) {
+			System.out.println("cannot execute query: " + ownershipCheck);
+			return;
+		} finally {
+			try {
+				if (rs != null && !rs.isClosed())
+					rs.close();
+			} catch (Exception e) {
+				System.out.println("cannot close resultset");
+			}
+		}
+		
+		if (count > 0){
+			System.out.println("You have already left feedback at this TH.");
+			return;
+		}
+		
+		
+
+		//Finally insert the feedback if it has passed all the tests.
+		try {
+			PreparedStatement insertRating = con.prepareStatement(
+					"insert into feedback (text, date, score, login, hid) "
+							+ "values (?, ?, ?, ?, ?)");
+			
+			insertRating.setString(1, text);
+			insertRating.setDate(2, date);
+			insertRating.setInt(3, score);
+			insertRating.setString(4, usr.getLogin());
+			insertRating.setInt(5, th.getHid());
+
+			insertRating.executeUpdate();
+			
+		} catch (java.sql.SQLIntegrityConstraintViolationException e) {
+			System.out.println("Youve already given feedback !");
+			return;
+		} catch (Exception e) {
+			System.out.println("cannot execute the query");
+			return;
+		}
+		
+		
+		System.out.println("Succesfully left feedback on " + th.getName());
+	}
+	
+	/**
+	 * Insert a new ava for a given Th.
+	 * @param th
+	 * @param period
+	 * @param con
+	 */
+	public void insertAvailability(TH th, Period period, Connector con) {
+		// First insert period
+		// Finally insert the feedback if it has passed all the tests.
+		int pid = -1;
+		try {
+			PreparedStatement insertPeriod = con.con.prepareStatement(
+					"insert into period (from, to) " + "values (?, ?)", Statement.RETURN_GENERATED_KEYS);
+			
+			insertPeriod.setDate(1, period.getFrom());
+			insertPeriod.setDate(2, period.getTo());
+
+			insertPeriod.executeUpdate();
+			
+			ResultSet rs = insertPeriod.getGeneratedKeys();
+			pid = rs.getInt(1);
+
+		} catch (java.sql.SQLIntegrityConstraintViolationException e) {
+			System.out.println("Youve already given feedback !");
+			return;
+		} catch (Exception e) {
+			System.out.println("cannot execute the query");
+			return;
+		}
+		
+		//Make sure we have a valid pid.
+		if( pid == -1){
+			System.out.println("Something went wrong please try again.");
+			return;
+		}
+		
+		
+		//Insert into ava the new availability. 
+		try {
+			PreparedStatement insertAvailable = con.con.prepareStatement(
+					"insert into period " + "values (?, ?, ?)");
+			
+			insertAvailable.setInt(1, th.getHid());
+			insertAvailable.setInt(2, pid);
+			insertAvailable.setInt(3, period.getPrice());
+			
+			insertAvailable.executeUpdate();
+		} catch (java.sql.SQLIntegrityConstraintViolationException e) {
+			System.out.println("Youve already declared availabiltiy for this time period.");
+			return;
+		} catch (Exception e) {
+			System.out.println("cannot execute the query");
+			return;
+		}
+	}
+
+	/**
+	 * Method used to insert ratings into the database.
+	 * 
+	 * @param user
+	 * @param fid
+	 * @param rating
+	 * @param con
+	 */
 	public void insertRating(User user, int fid, int rating, Connection con) {
 		try {
 			PreparedStatement insertRating = con.prepareStatement(
-					"insert into rating "
+					"insert into rate "
 							+ "values (?, ?, ?)");
 
 			insertRating.setString(1, user.getLogin());
@@ -22,10 +175,8 @@ public class Querys {
 			insertRating.setInt(3, rating);
 
 			insertRating.executeUpdate();
-			// TODO: DOnt really know what exceptions could get thrown here need
-			// to do more experimenting.
 		} catch (java.sql.SQLIntegrityConstraintViolationException e) {
-			System.out.println("Something went wrong please try again.");
+			System.out.println("Youve already rated this feedback!");
 			return;
 		} catch (Exception e) {
 			System.out.println("cannot execute the query");
