@@ -1,4 +1,5 @@
 import java.io.*;
+import java.sql.Connection;
 import java.sql.Date;
 import java.sql.Statement;
 import java.time.LocalDate;
@@ -120,12 +121,12 @@ public class UotelDriver {
 			}
 			// Case for statistics
 			if (c <= 10 && c >= 8) {
-				viewStatistics(c, con, in, usr);
+				viewStatistics(c, con, in, usr, reservationCart);
 			}
 			switch (c) {
 			case 0:
 				//TODO: need to review reservations, and stays.
-				handleLogOut(visitCart, reservationCart);
+				handleLogOut(in, usr, con.con, visitCart, reservationCart);
 				// case for logout
 				return;
 			case 2:
@@ -142,7 +143,7 @@ public class UotelDriver {
 				break;
 			case 5:
 				// case for browsing
-				handleBrowsing(con, in, usr);
+				handleBrowsing(con, in, usr, reservationCart);
 				break;
 			case 6:
 				// view suggested houses
@@ -169,12 +170,56 @@ public class UotelDriver {
 		}
 	}
 	
-	public static void handleLogOut(ArrayList<Reservation> visitCart, ArrayList<ResPeriodPair> reservationCart){
+	public static void handleLogOut(BufferedReader in, User user, Connection con, ArrayList<Reservation> visitCart, ArrayList<ResPeriodPair> reservationCart) throws IOException{
 		//First show all reservations
-		//If they want to remove then remove it from the list. Also have to know remove visit from the list too.
+		// If they want to remove then remove it from the list. Also have to
+		// know remove visit from the list too.
+		// Ask user which one
+		System.out.println("Do you want to get rid of any reservations before checkout?");
+		while(true){
+			int count = 1;
+			System.out.println("Reservation # | Reservation information");
+			for (ResPeriodPair pair : reservationCart) {
+				System.out.println(Integer.toString(count) + ".       | " + pair.getReservation().toString());
+				count++;
+			}
+			
+			int value = promptForInt(in, "Type number of reservation you want to get rid of. If none press 0.", "Try again inavlid input", 0, reservationCart.size(), false);
+			if(value == 0){
+				break;
+			}else{
+				reservationCart.remove(--value);
+			}
+		}
 		
-		//Next show all visits.
-		//No special case for removing I believe.
+		
+		System.out.println("Do you want to get rid of any visits before checkout?");
+		while(true){
+			int count = 1;
+			System.out.println("Visit # | Visit information");
+			for (Reservation visit : visitCart) {
+				System.out.println(Integer.toString(count) + ".       | " + visit.toString());
+				count++;
+			}
+			
+			int value = promptForInt(in, "Type number of reservation you want to get rid of. If none press 0.", "Try again inavlid input", 0, reservationCart.size(), false);
+			if(value == 0){
+				break;
+			}else{
+				visitCart.remove(--value);
+			}
+		}
+		
+		Querys q = new Querys();
+		//Inserting reservations.
+		q.insertReservations(user, reservationCart, con);
+		
+		//Inserting visits
+		q.insertVisits(user, visitCart, con);
+		
+
+		// Next show all visits.
+		// No special case for removing I believe.
 	}
 	
 	/**
@@ -259,13 +304,13 @@ public class UotelDriver {
 	 * @param usr
 	 * @throws IOException
 	 */
-	public static void viewStatistics(int choice, Connector con, BufferedReader in, User usr) throws IOException {
+	public static void viewStatistics(int choice, Connector con, BufferedReader in, User usr, ArrayList<ResPeriodPair> reservationCart) throws IOException {
 		System.out.println("What is the max number of houses you would like displayed per category?");
 		Querys q = new Querys();
 		while (true) {
 			String inNum = null;
 			int num = -1;
-			while ((inNum = in.readLine()) == null && inNum.length() == 0)
+			while ((inNum = in.readLine()) == null || inNum.length() == 0)
 				;
 			try {
 				num = Integer.parseInt(inNum);
@@ -278,17 +323,17 @@ public class UotelDriver {
 			case 8:
 				// choice for most popular
 				resultList = limitCategoryNum(q.getMostPopular(con.stmt), num);
-				viewTHs(resultList, con, in, usr, true);
+				viewTHs(resultList, con, in, usr, true, reservationCart);
 				return;
 			case 9:
 				// choice for most expensive
 				resultList = limitCategoryNum(q.getMostExpensive(con.stmt), num);
-				viewTHs(resultList, con, in, usr, true);
+				viewTHs(resultList, con, in, usr, true, reservationCart);
 				return;
 			case 10:
 				// choice for highest rated
 				resultList = limitCategoryNum(q.getHighestRated(con.stmt), num);
-				viewTHs(resultList, con, in, usr, true);
+				viewTHs(resultList, con, in, usr, true, reservationCart);
 				return;
 			}
 		}
@@ -319,7 +364,7 @@ public class UotelDriver {
 		return retList;
 	}
 
-	public static void thSelected(TH th, Connector con, BufferedReader in, User usr) throws IOException {
+	public static void thSelected(TH th, Connector con, BufferedReader in, User usr, ArrayList<ResPeriodPair> reservationCart) throws IOException {
 		System.out.println("Currently selected TH: " + th.toString());
 		while (true) {
 			displayHouseOptions();
@@ -342,14 +387,22 @@ public class UotelDriver {
 			if (num == 2){
 				handleViewFeedback(in, th, usr, con.stmt);
 			}
+			if (num == 3){
+				handleGiveFeedback(in, th, usr, con.stmt);
+			}
 			if (num == 4){
-				handleReservation(usr, th, in, con);
+				handleReservation(usr, th, in, con, reservationCart);
 			}
 			if (num == 5){
 				handleMostUsefulFeedback(th, in, con.stmt);
 			}
 
 		}
+	}
+	
+	//TODO: implement this thing WOO WOO SWAG!
+	public static void handleGiveFeedback(BufferedReader in, TH th, User usr, Statement stmt){
+		
 	}
 	
 	public static void handleViewFeedback(BufferedReader in, TH th, User usr, Statement stmt){
@@ -402,12 +455,12 @@ public class UotelDriver {
 		
 		visitCart.add(visitedReservation);
 	}
-
-	public static void handleReservation(User usr, TH th, BufferedReader in, Connector con) throws IOException{
+//TODO: stone, test, 8, 3, 4, 4, 2, 0, 0 casued a bug.
+	public static void handleReservation(User usr, TH th, BufferedReader in, Connector con, ArrayList<ResPeriodPair> reservationCart) throws IOException{
 		Querys q = new Querys();
 		
 		//TODO: Still need to remove the availability. 
-		
+		//TODO: Make period have a pid.
 		//First get dates available
 		ArrayList<Period> avaDates = q.getAvailability(th, con.stmt);
 		
@@ -441,8 +494,12 @@ public class UotelDriver {
 			System.out.println("Couldnt not make reservation. Please try again.");
 			return;
 		}
+		
+		//Add it to the cart
+		reservationCart.add(new ResPeriodPair(new_res, intended_period));
+		
 		//Let user know it was a success.
-		System.out.println("You reservation has been made at " + th.getName() + " during  " 
+		System.out.println("Your reservation has been added to the cart at " + th.getName() + " during  " 
 						  + new_res.getFrom().toString() 
 						  + " to " 
 				          + new_res.getTo().toString()
@@ -514,7 +571,7 @@ public class UotelDriver {
 	 * @param usr
 	 * @throws IOException
 	 */
-	public static void viewTHs(ArrayList<TH> ths, Connector con, BufferedReader in, User usr, boolean catOrder)
+	public static void viewTHs(ArrayList<TH> ths, Connector con, BufferedReader in, User usr, boolean catOrder, ArrayList<ResPeriodPair> reservationCart)
 			throws IOException {
 		while (true) {
 			System.out.println("      List of Houses      ");
@@ -550,7 +607,7 @@ public class UotelDriver {
 					System.out.println("Please select a valid house");
 					continue;
 				} else {
-					thSelected(ths.get(num - 1), con, in, usr);
+					thSelected(ths.get(num - 1), con, in, usr, reservationCart);
 					break;
 				}
 			}
@@ -672,7 +729,7 @@ public class UotelDriver {
 	 * @param usr
 	 * @throws IOException
 	 */
-	public static void handleBrowsing(Connector con, BufferedReader in, User usr) throws IOException {
+	public static void handleBrowsing(Connector con, BufferedReader in, User usr, ArrayList<ResPeriodPair> reservationCart) throws IOException {
 		int maxPrice = -1;
 		int minPrice = -1;
 		int sort = -1;
@@ -738,7 +795,7 @@ public class UotelDriver {
 
 		Querys q = new Querys();
 		ArrayList<TH> retList = q.browse(con.stmt, params, operations, sort);
-		viewTHs(retList, con, in, usr, false);
+		viewTHs(retList, con, in, usr, false, reservationCart);
 	}
 
 	/***
