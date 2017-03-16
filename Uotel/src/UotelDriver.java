@@ -739,7 +739,7 @@ public class UotelDriver {
 		System.out.println("Please provide a date in the following format 'YYYY-mm-dd'");
 		while (true) {
 			try {
-				userDate= Date.valueOf(in.readLine());
+				userDate = Date.valueOf(in.readLine());
 				break;
 			} catch (Exception e) {
 				System.out.println("Bad format please try again.");
