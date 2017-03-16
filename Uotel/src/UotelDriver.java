@@ -21,7 +21,6 @@ public class UotelDriver {
 		System.out.println("        Welcome to the Uotel System     ");
 		Connector con = null;
 		String choice;
-		User current_user = null;
 
 		int c = 0;
 		try {
@@ -44,10 +43,10 @@ public class UotelDriver {
 				if (c == 1) {
 					String login, password;
 					System.out.println("please enter login:");
-					while ((login = in.readLine()) == null && login.length() == 0)
+					while ((login = in.readLine()) == null || login.length() == 0)
 						;
 					System.out.println("please enter a password:");
-					while ((password = in.readLine()) == null && password.length() == 0)
+					while ((password = in.readLine()) == null || password.length() == 0)
 						;
 					User usr = q.loginUser(login, password, con.stmt);
 					if (usr != null) {
@@ -57,22 +56,22 @@ public class UotelDriver {
 				} else if (c == 2) {
 					String login, password, name, address, phone;
 					System.out.println("please enter login:");
-					while ((login = in.readLine()) == null && login.length() == 0)
+					while ((login = in.readLine()) == null || login.length() == 0)
 						;
 					System.out.println("please enter a password:");
-					while ((password = in.readLine()) == null && password.length() == 0)
+					while ((password = in.readLine()) == null || password.length() == 0)
 						;
 
 					System.out.println("please enter your name:");
-					while ((name = in.readLine()) == null && name.length() == 0)
+					while ((name = in.readLine()) == null || name.length() == 0)
 						;
 
 					System.out.println("please enter your address:");
-					while ((address = in.readLine()) == null && address.length() == 0)
+					while ((address = in.readLine()) == null || address.length() == 0)
 						;
 
 					System.out.println("please enter your phone:");
-					while ((phone = in.readLine()) == null && phone.length() == 0)
+					while ((phone = in.readLine()) == null || phone.length() == 0)
 						;
 
 					User user = q.newUser(login, name, password, address, phone, false, con.stmt);
@@ -734,9 +733,10 @@ public class UotelDriver {
 		q.updateTH(thToBeUpdated, con.con);
 	}
 
-	public static Date getDateFromUser(BufferedReader in){
+	public static Date promptForDate(BufferedReader in){
 		Date userDate = null;
 		System.out.println("Please provide a date in the following format 'YYYY-mm-dd'");
+		
 		while (true) {
 			try {
 				userDate = Date.valueOf(in.readLine());
@@ -837,7 +837,7 @@ public class UotelDriver {
 					break;
 				case "Date_Listed":
 				case "8":
-					toUpdate.setDate_listed(getDateFromUser(in));
+					toUpdate.setDate_listed(promptForDate(in));
 					break;
 				case "9":
 				case "Keywords":
