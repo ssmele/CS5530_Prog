@@ -681,7 +681,7 @@ public class Querys {
 		try{
 			rs = stmt.executeQuery(sql);
 			while(rs.next()){
-				periodList.add(new Period(rs.getDate("fromt"), rs.getDate("to"), rs.getInt("price_per_night")));
+				periodList.add(new Period(rs.getDate("from"), rs.getDate("to"), rs.getInt("price_per_night")));
 			}
 			rs.close();
 		}catch(Exception e){
@@ -710,7 +710,7 @@ public class Querys {
 	public Reservation insertReservation(User user, TH th, Period p, Connection con){
 		try {
 			PreparedStatement insertRes = con.prepareStatement(
-					"insert into reserve (from, to, price_per_night, login, url) "
+					"insert into reserve (reserve.from, reserve.to, price_per_night, login, h_id) "
 							+ "values (?, ?, ?, ?, ?)");
 
 			insertRes.setDate(1, p.getFrom());
@@ -731,5 +731,142 @@ public class Querys {
 		}
 		
 		return new Reservation(-1, p.getFrom(), p.getTo(), p.getPrice(), user.getLogin(), th.getHid());
+	}
+	
+	public void insertReservations(User user, ArrayList<ResPeriodPair> pairs, Connection con){
+		try {
+			PreparedStatement insertRes = con.prepareStatement(
+					"insert into reserve (reserve.from, reserve.to, price_per_night, login, h_id) "
+							+ "values (?, ?, ?, ?, ?)");
+			
+			//Uses batches to add all the reservation period pairs.
+			for(ResPeriodPair pair : pairs){
+				insertRes.setDate(1, pair.getPeriod().getFrom());
+				insertRes.setDate(2, pair.getPeriod().getTo());
+				insertRes.setInt(3, pair.getPeriod().getPrice()); 
+				insertRes.setString(4, user.getLogin());
+				insertRes.setInt(5, pair.getReservation().getHid());
+				
+				insertRes.addBatch();
+			}
+			insertRes.executeBatch();
+		} catch (java.sql.SQLIntegrityConstraintViolationException e) {
+			System.out.println("Something went wrong pleas try again.");
+			return;
+		} catch (Exception e) {
+			System.out.println("cannot execute the query");
+			return;
+		}
+		
+		return;
+	}
+	
+	
+	public void insertVisit(User user, Reservation res, Connection con){
+		try {
+			PreparedStatement insertRes = con.prepareStatement(
+					"insert into visit (from, to, rid) "
+							+ "values (?, ?, ?)");
+
+			insertRes.setDate(1, res.getFrom());
+			insertRes.setDate(2, res.getTo());
+			insertRes.setInt(3, res.getRid());
+
+			insertRes.executeUpdate();
+			// TODO: DOnt really know what exceptions could get thrown here need
+			// to do more experimenting.
+		} catch (java.sql.SQLIntegrityConstraintViolationException e) {
+			System.out.println("Something went wrong pleas try again.");
+			return;
+		} catch (Exception e) {
+			System.out.println("cannot execute the query");
+			return;
+		}
+	}
+	
+	public void insertVisits(User user, ArrayList<Reservation> res, Connection con){
+		try {
+			PreparedStatement insertRes = con.prepareStatement(
+					"insert into visit (from, to, rid) "
+							+ "values (?, ?, ?)");
+
+			//Add all the visits.
+			for(Reservation r : res){
+				insertRes.setDate(1, r.getFrom());
+				insertRes.setDate(2, r.getTo());
+				insertRes.setInt(3, r.getRid());
+				
+				insertRes.addBatch();
+			}
+
+			insertRes.executeBatch();
+			// TODO: DOnt really know what exceptions could get thrown here need
+			// to do more experimenting.
+		} catch (java.sql.SQLIntegrityConstraintViolationException e) {
+			System.out.println("Something went wrong pleas try again.");
+			return;
+		} catch (Exception e) {
+			System.out.println("cannot execute the query");
+			return;
+		}
+	}
+	
+	
+	public ArrayList<Reservation> getUnstayedReservation(User user, Statement stmt){
+		String sql = "select * from reserve where rid not in (select rid from visit) and login = '" + user.getLogin() + "'";
+		ArrayList<Reservation> resList = new ArrayList<>();
+
+		//Execute the most useful query and then add each feedback 
+		ResultSet rs = null;
+		try{
+			rs = stmt.executeQuery(sql);
+			while(rs.next()){
+				resList.add((new Reservation(rs.getInt("rid"), rs.getDate("from"), rs.getDate("to"),
+						                     rs.getInt("price_per_night"), rs.getString("login"), rs.getInt("rid"))));
+			}
+			rs.close();
+		}catch(Exception e){
+			System.out.println("cannot execute query: " + sql);
+			return null;
+		}finally {
+			try {
+				if (rs != null && !rs.isClosed())
+					rs.close();
+			} catch (Exception e) {
+				System.out.println("cannot close resultset");
+			}
+		}
+		
+		return resList;
+	}
+	
+	public ArrayList<Feedback> getFeedbackTH(TH th, Statement stmt){
+		String sql = "select * from feedback where feedback.hid = " + Integer.toString(th.getHid()) + ";";
+		
+		
+		ArrayList<Feedback> feedbackList = new ArrayList<>();
+
+		//Execute the most useful query and then add each feedback 
+		ResultSet rs = null;
+		try{
+			rs = stmt.executeQuery(sql);
+			while(rs.next()){
+				feedbackList.add((new Feedback(rs.getInt("fid"), rs.getString("text"), rs.getDate("date"), rs.getInt("score"), rs.getString("login"), rs.getInt("hid"))));
+			}
+			rs.close();
+		}catch(Exception e){
+			System.out.println("cannot execute query: " + sql);
+			return null;
+		}finally {
+			try {
+				if (rs != null && !rs.isClosed())
+					rs.close();
+			} catch (Exception e) {
+				System.out.println("cannot close resultset");
+			}
+		}
+		
+		return feedbackList;
+		
 	}
 }

@@ -1,13 +1,8 @@
 import java.io.*;
-import java.sql.Connection;
 import java.sql.Date;
 import java.sql.Statement;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.util.ArrayList;
-
-import sun.awt.image.PixelConverter.Ushort555Rgb;
 
 public class UotelDriver {
 
@@ -110,6 +105,8 @@ public class UotelDriver {
 	 * @throws IOException
 	 */
 	public static void applicationDriver(Connector con, BufferedReader in, User usr) throws IOException {
+		ArrayList<Reservation> visitCart = new ArrayList<>();
+		ArrayList<ResPeriodPair> reservationCart = new ArrayList<>();
 		while (true) {
 			displayOperations(usr.isAdmin());
 			String choice = null;
@@ -127,6 +124,8 @@ public class UotelDriver {
 			}
 			switch (c) {
 			case 0:
+				//TODO: need to review reservations, and stays.
+				handleLogOut(visitCart, reservationCart);
 				// case for logout
 				return;
 			case 2:
@@ -139,6 +138,7 @@ public class UotelDriver {
 				break;
 			case 4:
 				// case for recording a stay
+				handleStay(usr, in, con, visitCart);
 				break;
 			case 5:
 				// case for browsing
@@ -168,7 +168,15 @@ public class UotelDriver {
 			}
 		}
 	}
-
+	
+	public static void handleLogOut(ArrayList<Reservation> visitCart, ArrayList<ResPeriodPair> reservationCart){
+		//First show all reservations
+		//If they want to remove then remove it from the list. Also have to know remove visit from the list too.
+		
+		//Next show all visits.
+		//No special case for removing I believe.
+	}
+	
 	/**
 	 * This method retrieves the most trusted users with the help of the querys
 	 * class, and then displays them to the admin user.
@@ -331,39 +339,87 @@ public class UotelDriver {
 			if (num == 1){
 				handleFavoriteTH(usr, th, in, con.stmt);
 			}
+			if (num == 2){
+				handleViewFeedback(in, th, usr, con.stmt);
+			}
 			if (num == 4){
 				handleReservation(usr, th, in, con);
 			}
-			if (num == 6){
+			if (num == 5){
 				handleMostUsefulFeedback(th, in, con.stmt);
 			}
-			
-			/*
-			System.out.println("1. Mark as favorite");
-			System.out.println("2. View feedback");
-			System.out.println("3. Give feedback");
-			System.out.println("4. Make a reservation");
-			System.out.println("5. Record a Stay");
-			System.out.println("6. Get most useful feedback");
-			*/
 		}
 	}
 	
+	public static void handleViewFeedback(BufferedReader in, TH th, User usr, Statement stmt){
+		//Gather all feedback for that th.
+		Querys q = new Querys();
+		ArrayList<Feedback> feedbackList = new ArrayList<>();
+		feedbackList = q.getFeedbackTH(th, stmt);
+
+		// Ask user which one
+		int count = 1;
+		System.out.println("Feedback # | Feedback information");
+		for (Feedback feed : feedbackList) {
+			System.out.println(Integer.toString(count) + ".       | " + feed.toString());
+			count++;
+		}
+
+		// If its empty report to the user that theres nothing for them to do
+		// here.
+		if (feedbackList.isEmpty()) {
+			System.out.println("This TH has no feed back assocaited with it yet.");
+			return;
+		}
+		
+		//TODO: Make this so the user can now rate it.
+	}
+	
+	public static void handleStay(User usr, BufferedReader in, Connector con, ArrayList<Reservation> visitCart) throws IOException{
+		//Gather up the unstayedReservations for that particular user.
+		Querys q = new Querys();
+		ArrayList<Reservation> unstayedReservations = q.getUnstayedReservation(usr, con.stmt);
+
+		// Ask user which one
+		int count = 1;
+		System.out.println("Reservation # | Reservation information");
+		for (Reservation res : unstayedReservations) {
+			System.out.println(Integer.toString(count) + ".       | " + res.toString());
+			count++;
+		}
+
+		//If its empty report to the user that theres nothing for them to do here.
+		if (unstayedReservations.isEmpty()) {
+			System.out.println("You have no current unfulfilled reservations.");
+			return;
+		}
+
+		//Get the reservation the user wants to record a stay for.
+		int res_num = promptForInt(in, "What reservation do you want to record a stay for? ",
+				                          "Invalid reservation number please try again.", 1, unstayedReservations.size(), false);
+		Reservation visitedReservation = unstayedReservations.get(--res_num);
+		
+		visitCart.add(visitedReservation);
+	}
+
 	public static void handleReservation(User usr, TH th, BufferedReader in, Connector con) throws IOException{
 		Querys q = new Querys();
+		
+		//TODO: Still need to remove the availability. 
 		
 		//First get dates available
 		ArrayList<Period> avaDates = q.getAvailability(th, con.stmt);
 		
 		//Ask user which one
-		int count = 0;
-		System.out.println("Period # | From   | To   | Price per night. ");
-		for(Period p : avaDates){
+		int count = 1;
+		System.out.println("Period # | From       | To         | Price per night. ");
+	 	for(Period p : avaDates){
 			
 			System.out.println(Integer.toString(count) + ".       |" + " " 
 							   + p.getFrom().toString()
 							   + " | " + p.getTo().toString()
 							   + " | " + Integer.toString(p.getPrice()));
+			count++;
 		}
 		
 		if(avaDates.isEmpty()){
@@ -372,7 +428,7 @@ public class UotelDriver {
 		}
 		
 		int period_num = promptForInt(in,
-				        "What period do you want to make a reservation for",
+				        "What period number do you want to make a reservation for?",
 					    "Period does not exist try again.", 1, avaDates.size(), false);
 		
 		Period intended_period = avaDates.get(--period_num);
@@ -380,12 +436,16 @@ public class UotelDriver {
 		//Insert into price.
 		Reservation new_res = q.insertReservation(usr, th, intended_period, con.con);
 		
+		if(new_res == null){
+			System.out.println("Couldnt not make reservation. Please try again.");
+			return;
+		}
 		//Let user know it was a success.
 		System.out.println("You reservation has been made at " + th.getName() + " during  " 
 						  + new_res.getFrom().toString() 
 						  + " to " 
 				          + new_res.getTo().toString()
-				          + " for " + Integer.toString(new_res.getPrice_per_night()) + " a night");
+				          + " for " + Integer.toString(new_res.getPrice_per_night()) + " a night!");
 	}
 	
 	/**
@@ -773,6 +833,11 @@ public class UotelDriver {
 		q.updateTH(thToBeUpdated, con.con);
 	}
 
+	/**
+	 * Method that gets a proper date out of the user.
+	 * @param in
+	 * @return
+	 */
 	public static Date promptForDate(BufferedReader in){
 		Date userDate = null;
 		System.out.println("Please provide a date in the following format 'YYYY-mm-dd'");
@@ -954,8 +1019,7 @@ public class UotelDriver {
 		System.out.println("2. View feedback");
 		System.out.println("3. Give feedback");
 		System.out.println("4. Make a reservation");
-		System.out.println("5. Record a Stay");
-		System.out.println("6. Get most useful feedback");
+		System.out.println("5. Get most useful feedback");
 	}
 
 	/**
