@@ -204,7 +204,7 @@ public class UotelDriver {
 				count++;
 			}
 			
-			int value = promptForInt(in, "Type number of reservation you want to get rid of. If none press 0.", "Try again inavlid input", 0, reservationCart.size(), false);
+			int value = promptForInt(in, "Type number of visit you want to get rid of. If none press 0.", "Try again inavlid input", 0, reservationCart.size(), false);
 			if(value == 0){
 				break;
 			}else{
@@ -372,7 +372,7 @@ public class UotelDriver {
 			displayHouseOptions();
 			System.out.println("Select an option number or 0 to go back to the list (only back currently works)");
 			String input = null;
-			while ((input = in.readLine()) == null && input.length() == 0)
+			while ((input = in.readLine()) == null || input.length() == 0)
 				;
 			int num = -1;
 			try {
@@ -387,7 +387,6 @@ public class UotelDriver {
 				handleFavoriteTH(usr, th, in, con.stmt);
 			}
 			if (num == 2){
-				//TODO: Test rating is working.
 				handleViewFeedback(in, th, usr, con);
 			}
 			if (num == 3){
@@ -1058,6 +1057,7 @@ public class UotelDriver {
 		try {
 			while (!response.equals("Done")) {
 				System.out.println("Updatable Fields:");
+				System.out.println("0.Done (When you want to stop updating)");
 				System.out.println("1.Category");
 				System.out.println("2.Price");
 				System.out.println("3.Year_Built");
@@ -1067,7 +1067,7 @@ public class UotelDriver {
 				System.out.println("7.Phone");
 				System.out.println("8.Date_Listed");
 				System.out.println("9.Keywords");
-				System.out.println("10.Done (When you want to stop updating)");
+				System.out.println("10. Add availability)");
 				System.out.println("Please enter name or number of value you want to update.");
 				response = in.readLine();
 				switch (response) {
@@ -1143,6 +1143,17 @@ public class UotelDriver {
 					q.addKeywordToHID(updateValue, toUpdate.getHid(), stmt);
 					break;
 				case "10":
+				case "Add availability":
+					System.out.println("Please provide a from and a to date for this availability.");
+					Date from = promptForDate(in);
+					Date to = promptForDate(in);
+					int price_per_night = promptForInt(in, "Please provide a price_per_night during this availability", "Invalid entry please try again!", 
+													   1,Integer.MAX_VALUE, false);
+					
+					Period new_period = new Period(from, to, price_per_night);
+					
+					q.insertAvalabity(th, new_period, in);
+				case "0":
 				case "Done":
 					System.out.println("Your changes will now be updated.");
 					return toUpdate;

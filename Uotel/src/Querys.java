@@ -101,7 +101,64 @@ public class Querys {
 	}
 	
 	/**
+	 * Insert a new ava for a given Th.
+	 * @param th
+	 * @param period
+	 * @param con
+	 */
+	public void insertAvailability(TH th, Period period, Connector con) {
+		// First insert period
+		// Finally insert the feedback if it has passed all the tests.
+		int pid = -1;
+		try {
+			PreparedStatement insertPeriod = con.con.prepareStatement(
+					"insert into period (from, to) " + "values (?, ?)", Statement.RETURN_GENERATED_KEYS);
+			
+			insertPeriod.setDate(1, period.getFrom());
+			insertPeriod.setDate(2, period.getTo());
+
+			insertPeriod.executeUpdate();
+			
+			ResultSet rs = insertPeriod.getGeneratedKeys();
+			pid = rs.getInt(1);
+
+		} catch (java.sql.SQLIntegrityConstraintViolationException e) {
+			System.out.println("Youve already given feedback !");
+			return;
+		} catch (Exception e) {
+			System.out.println("cannot execute the query");
+			return;
+		}
+		
+		//Make sure we have a valid pid.
+		if( pid == -1){
+			System.out.println("Something went wrong please try again.");
+			return;
+		}
+		
+		
+		//Insert into ava the new availability. 
+		try {
+			PreparedStatement insertAvailable = con.con.prepareStatement(
+					"insert into period " + "values (?, ?, ?)");
+			
+			insertAvailable.setInt(1, th.getHid());
+			insertAvailable.setInt(2, pid);
+			insertAvailable.setInt(3, period.getPrice());
+			
+			insertAvailable.executeUpdate();
+		} catch (java.sql.SQLIntegrityConstraintViolationException e) {
+			System.out.println("Youve already declared availabiltiy for this time period.");
+			return;
+		} catch (Exception e) {
+			System.out.println("cannot execute the query");
+			return;
+		}
+	}
+
+	/**
 	 * Method used to insert ratings into the database.
+	 * 
 	 * @param user
 	 * @param fid
 	 * @param rating
