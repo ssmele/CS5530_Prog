@@ -175,6 +175,8 @@ public class UotelDriver {
 		// If they want to remove then remove it from the list. Also have to
 		// know remove visit from the list too.
 		// Ask user which one
+		
+		//Purge any bad reservations.
 		System.out.println("Do you want to get rid of any reservations before checkout?");
 		while(true){
 			int count = 1;
@@ -192,7 +194,7 @@ public class UotelDriver {
 			}
 		}
 		
-		
+		//Purge any bad visits.
 		System.out.println("Do you want to get rid of any visits before checkout?");
 		while(true){
 			int count = 1;
@@ -385,7 +387,8 @@ public class UotelDriver {
 				handleFavoriteTH(usr, th, in, con.stmt);
 			}
 			if (num == 2){
-				handleViewFeedback(in, th, usr, con.stmt);
+				//TODO: Test rating is working.
+				handleViewFeedback(in, th, usr, con);
 			}
 			if (num == 3){
 				handleGiveFeedback(in, th, usr, con.stmt);
@@ -405,11 +408,11 @@ public class UotelDriver {
 		
 	}
 	
-	public static void handleViewFeedback(BufferedReader in, TH th, User usr, Statement stmt){
+	public static void handleViewFeedback(BufferedReader in, TH th, User usr, Connector con) throws IOException{
 		//Gather all feedback for that th.
 		Querys q = new Querys();
 		ArrayList<Feedback> feedbackList = new ArrayList<>();
-		feedbackList = q.getFeedbackTH(th, stmt);
+		feedbackList = q.getFeedbackTH(th, con.stmt);
 
 		// Ask user which one
 		int count = 1;
@@ -426,9 +429,19 @@ public class UotelDriver {
 			return;
 		}
 		
-		//TODO: Make this so the user can now rate it.
+		while(true){
+			int feedbackNum = promptForInt(in, "If you want to rate one of the feedbacks below type its number. If you want to continue type 0:", "Invalid number", 1, feedbackList.size(), false);
+			
+			if(feedbackNum == 0){
+				return;
+			}
+			
+			int rating = promptForInt(in, "Providing a rating please. 0-useless, 1-useful, 1-very useful.", "Invalid rating only 0-useless, 1-useful, 1-very useful", 0, 2, false);
+			q.insertRating(usr, feedbackList.get(--feedbackNum).getFid(), rating, con.con);
+		}
+
 	}
-	
+
 	public static void handleStay(User usr, BufferedReader in, Connector con, ArrayList<Reservation> visitCart) throws IOException{
 		//Gather up the unstayedReservations for that particular user.
 		Querys q = new Querys();

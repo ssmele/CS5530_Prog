@@ -11,6 +11,28 @@ public class Querys {
 	public Querys() {
 	}
 
+	public void insertRating(User user, int fid, int rating, Connection con) {
+		try {
+			PreparedStatement insertRating = con.prepareStatement(
+					"insert into rating "
+							+ "values (?, ?, ?)");
+
+			insertRating.setString(1, user.getLogin());
+			insertRating.setInt(2, fid);
+			insertRating.setInt(3, rating);
+
+			insertRating.executeUpdate();
+			// TODO: DOnt really know what exceptions could get thrown here need
+			// to do more experimenting.
+		} catch (java.sql.SQLIntegrityConstraintViolationException e) {
+			System.out.println("Something went wrong please try again.");
+			return;
+		} catch (Exception e) {
+			System.out.println("cannot execute the query");
+			return;
+		}
+	}
+	
 	/**
 	 * Takes in given information and persists a TH in the database with given
 	 * values.
