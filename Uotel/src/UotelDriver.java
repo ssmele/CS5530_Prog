@@ -2,6 +2,7 @@ import java.io.*;
 import java.sql.Date;
 import java.sql.Statement;
 import java.text.DateFormat;
+import java.time.LocalDate;
 import java.util.ArrayList;
 
 import sun.awt.image.PixelConverter.Ushort555Rgb;
@@ -327,13 +328,29 @@ public class UotelDriver {
 			}
 			if (num == 0)
 				return;
+			if (num == 1){
+				handleFavoriteTH(usr, th, in, con.stmt);
+			}
 			if (num == 6){
 				handleMostUsefulFeedback(th, in, con.stmt);
-				
 			}
+			
+			/*
+			System.out.println("1. Mark as favorite");
+			System.out.println("2. View feedback");
+			System.out.println("3. Give feedback");
+			System.out.println("4. Make a reservation");
+			System.out.println("5. Record a Stay");
+			System.out.println("6. Get most useful feedback");
+			*/
 		}
 	}
 
+	public static void handleFavoriteTH(User usr, TH th, BufferedReader in, Statement stmt){
+		Querys q = new Querys();
+		q.favoriteTH(th, usr.getLogin(), Date.valueOf(LocalDate.now()), stmt);
+	}
+	
 	/**
 	 * THis method is used to get the most useful feed back for a certain th. Makes use of method in the Queries
 	 * class to do so.
