@@ -309,8 +309,8 @@ public class Querys {
 	 *         the number of visits in descending order.
 	 */
 	public ArrayList<TH> getMostPopular(Statement stmt) {
-		String sql = "select t.category, t.hid, t.name, t.price, COUNT(t.hid) " + "from visit v, reserve r, th t "
-				+ "WHERE v.rid = r.rid AND t.hid = h_id " + "GROUP BY t.category, t.hid, t.name, t.price "
+		String sql = "select t.category, t.hid, t.name, t.price, t.address, COUNT(t.hid) " + "from visit v, reserve r, th t "
+				+ "WHERE v.rid = r.rid AND t.hid = h_id " + "GROUP BY t.category, t.hid, t.name, t.price, t.address "
 				+ "ORDER BY t.category, COUNT(t.hid);";
 		ResultSet rs = null;
 		ArrayList<TH> thList = new ArrayList<TH>();
@@ -323,6 +323,7 @@ public class Querys {
 				temp.setHid(rs.getInt("hid"));
 				temp.setName(rs.getString("name"));
 				temp.setPrice(rs.getInt("price"));
+				temp.setAddress(rs.getString("address"));
 				thList.add(temp);
 			}
 			rs.close();
@@ -347,7 +348,7 @@ public class Querys {
 	 *         by price of the TH in descending order.
 	 */
 	public ArrayList<TH> getMostExpensive(Statement stmt) {
-		String sql = "select t.category, t.hid, t.name, t.price " + "from th t " + "ORDER BY t.category, t.price DESC;";
+		String sql = "select t.category, t.hid, t.name, t.price, t.address " + "from th t " + "ORDER BY t.category, t.price DESC;";
 		ResultSet rs = null;
 		ArrayList<TH> thList = new ArrayList<TH>();
 		try {
@@ -359,6 +360,7 @@ public class Querys {
 				temp.setHid(rs.getInt("hid"));
 				temp.setName(rs.getString("name"));
 				temp.setPrice(rs.getInt("price"));
+				temp.setAddress(rs.getString("address"));
 				thList.add(temp);
 			}
 			rs.close();
@@ -384,8 +386,8 @@ public class Querys {
 	 *         by the average of all the ratings of the TH in descending order.
 	 */
 	public ArrayList<TH> getHighestRated(Statement stmt) {
-		String sql = "select t.category, t.hid, t.name, t.price, AVG(f.score) " + "from th t, feedback f "
-				+ "where t.hid = f.hid " + "group by t.category, t.hid, t.name, t.price "
+		String sql = "select t.category, t.hid, t.name, t.price, t.address, AVG(f.score) " + "from th t, feedback f "
+				+ "where t.hid = f.hid " + "group by t.category, t.hid, t.name, t.price, t.address "
 				+ "ORDER BY t.category, AVG(f.score) DESC;";
 		ResultSet rs = null;
 		ArrayList<TH> thList = new ArrayList<TH>();
@@ -398,7 +400,7 @@ public class Querys {
 				temp.setHid(rs.getInt("hid"));
 				temp.setName(rs.getString("name"));
 				temp.setPrice(rs.getInt("price"));
-				thList.add(temp);
+				temp.setAddress(rs.getString("address"));
 				thList.add(temp);
 			}
 			rs.close();
@@ -471,7 +473,107 @@ public class Querys {
 	 */
 	public ArrayList<TH> browse(Statement stmt, int max, int min, String city, String state, String keyword,
 			String category, int sort) {
-		return null;
+		boolean hasWhere = false;
+		String sql = "SELECT DISTINCT(t.hid), t.category, t.price, t.name, t.address  " +
+					 "FROM th t LEFT OUTER JOIN has_keyword hk " +
+					 "ON (t.hid = hk.hid) LEFT OUTER JOIN keyword k " +
+					 "ON (hk.wid = k.wid) LEFT OUTER JOIN ";
+		// Change query for sorting with only trusted users
+		if (sort == 3){
+			sql += "(select * from feedback f, trust tr where f.login = tr.trustee_id AND tr.is_trusted = 1) as f ";
+		}
+		else{
+			sql += " feedback f ";
+		}
+		sql += "ON (t.hid = f.hid) ";
+		// user wants to set a max
+		if (max != -1){
+			sql += "WHERE t.price <= " + max + " ";
+		}
+		// user wants to set a min
+		if (min != -1){
+			if (!hasWhere){
+				hasWhere = true;
+				sql += "WHERE t.price >= " + min + " ";
+			}
+			else
+				sql += "AND t.price >= " + min + " ";
+		}
+		// user wants specific city
+		if (city != null){
+			if (!hasWhere){
+				hasWhere = true;
+				sql += "WHERE t.address LIKE '%" + city + "%' ";
+			}
+			else
+				sql += "AND t.address LIKE '%" + city + "%' ";
+		}
+		//user wants specific state
+		if (state != null){
+			if (!hasWhere){
+				hasWhere = true;
+				sql += "WHERE t.address LIKE '%" + state + "%' ";
+			}
+			else
+				sql += "AND t.address LIKE '%" + state + "%' ";
+		}
+		// user wants specific keyword
+		if (keyword != null){
+			if (!hasWhere){
+				hasWhere = true;
+				sql += "WHERE k.word LIKE '" + keyword + "' ";
+			}
+			else
+				sql += "AND k.word LIKE '" + keyword + "' ";
+		}
+		// user wants specific category
+		if (category != null){
+			if (!hasWhere){
+				hasWhere = true;
+				sql += "WHERE t.category LIKE '" + category + "' ";
+			}
+			else
+				sql += "AND t.category LIKE '" + category + "' ";
+		}
+		sql += "GROUP BY t.hid, t.category, t.price, t.name, t.address ";
+		
+		// user wants to sort by price
+		if (sort == 1){
+			sql += "ORDER BY t.price DESC ";
+		}
+		// user wants to sort by score (only by trusted handled above with joining 
+		// a nested sql statement
+		else if (sort == 2 || sort == 3){
+			sql += "ORDER BY AVG(f.score) DESC";
+		}
+		sql += ";";
+		ResultSet rs = null;
+		ArrayList<TH> thList = new ArrayList<TH>();
+		try {
+			rs = stmt.executeQuery(sql);
+			rs = stmt.executeQuery(sql);
+			while (rs.next()) {
+				TH temp = new TH();
+				temp.setCategory(rs.getString("category"));
+				temp.setHid(rs.getInt("hid"));
+				temp.setName(rs.getString("name"));
+				temp.setPrice(rs.getInt("price"));
+				temp.setAddress(rs.getString("address"));
+				thList.add(temp);
+			}
+			rs.close();
+		} catch (Exception e) {
+			System.out.println("cannot execute query: " + sql);
+			return null;
+		} finally {
+			try {
+				if (rs != null && !rs.isClosed())
+					rs.close();
+			} catch (Exception e) {
+				System.out.println("cannot close resultset");
+			}
+		}
+		return thList;
 	}
 	
 	/**
