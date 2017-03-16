@@ -426,7 +426,7 @@ public class UotelDriver {
 						System.out.println("  " + category);
 					}
 				}
-				System.out.println(count + ". " + th.getName() + " " + th.getPrice());
+				System.out.println(count + ".  name: " + th.getName() + "    price: $" + th.getPrice() + "    address: " + th.getAddress());
 				count++;
 			}
 			System.out.println("Enter a house number to view it or 0 to go back");
