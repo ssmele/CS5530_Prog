@@ -391,7 +391,7 @@ public class UotelDriver {
 				handleViewFeedback(in, th, usr, con);
 			}
 			if (num == 3){
-				handleGiveFeedback(in, th, usr, con.stmt);
+				handleGiveFeedback(in, th, usr, con.con);
 			}
 			if (num == 4){
 				handleReservation(usr, th, in, con, reservationCart);
@@ -404,8 +404,26 @@ public class UotelDriver {
 	}
 	
 	//TODO: implement this thing WOO WOO SWAG!
-	public static void handleGiveFeedback(BufferedReader in, TH th, User usr, Statement stmt){
+	public static void handleGiveFeedback(BufferedReader in, TH th, User usr, Connection con) throws IOException{
+		// Get the max price value
+		String prompt, error, text;
+		prompt = "Please enter text describing your stay.";
+		error = "Please enter a valid option";
+		text = promptForString(in, prompt, error, false);
 		
+		//Get date for the 
+		//TODO: Should this be user inputed?
+		Date date;
+		prompt = "Please provide the date of this feedback.";
+		date = promptForDate(in);
+		
+		int score;
+		prompt = "Please enter a score (0 = terrible, 10 = excellent)";
+		score = promptForInt(in, prompt, error, 0, 10, false);
+	
+		//Once we have gather the info send off the request to insert this feedback in the table. 
+		Querys q = new Querys();
+		q.insertFeedback(usr, th, text, score, date, con);
 	}
 	
 	public static void handleViewFeedback(BufferedReader in, TH th, User usr, Connector con) throws IOException{
@@ -414,29 +432,30 @@ public class UotelDriver {
 		ArrayList<Feedback> feedbackList = new ArrayList<>();
 		feedbackList = q.getFeedbackTH(th, con.stmt);
 
-		// Ask user which one
-		int count = 1;
-		System.out.println("Feedback # | Feedback information");
-		for (Feedback feed : feedbackList) {
-			System.out.println(Integer.toString(count) + ".       | " + feed.toString());
-			count++;
-		}
-
-		// If its empty report to the user that theres nothing for them to do
-		// here.
-		if (feedbackList.isEmpty()) {
-			System.out.println("This TH has no feed back assocaited with it yet.");
-			return;
-		}
 		
 		while(true){
-			int feedbackNum = promptForInt(in, "If you want to rate one of the feedbacks below type its number. If you want to continue type 0:", "Invalid number", 1, feedbackList.size(), false);
+			// Ask user which one
+			int count = 1;
+			System.out.println("Feedback # | Feedback information");
+			for (Feedback feed : feedbackList) {
+				System.out.println(Integer.toString(count) + ".       | " + feed.toString());
+				count++;
+			}
+
+			// If its empty report to the user that theres nothing for them to do
+			// here.
+			if (feedbackList.isEmpty()) {
+				System.out.println("This TH has no feed back assocaited with it yet.");
+				return;
+			}
+			
+			int feedbackNum = promptForInt(in, "If you want to rate one of the feedbacks below type its number. If you want to continue type 0:", "Invalid number", 0, feedbackList.size(), false);
 			
 			if(feedbackNum == 0){
 				return;
 			}
 			
-			int rating = promptForInt(in, "Providing a rating please. 0-useless, 1-useful, 1-very useful.", "Invalid rating only 0-useless, 1-useful, 1-very useful", 0, 2, false);
+			int rating = promptForInt(in, "Providing a rating please. 0-useless, 1-useful, 2-very useful.", "Invalid rating only 0-useless, 1-useful, 1-very useful", 0, 2, false);
 			q.insertRating(usr, feedbackList.get(--feedbackNum).getFid(), rating, con.con);
 		}
 
