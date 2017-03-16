@@ -10,9 +10,11 @@ import java.sql.Connection;
 public class Querys {
 	public Querys() {
 	}
-	
+
 	/**
-	 * Takes in given information and persists a TH in the database with given values.
+	 * Takes in given information and persists a TH in the database with given
+	 * values.
+	 * 
 	 * @param category
 	 * @param year_built
 	 * @param name
@@ -59,11 +61,12 @@ public class Querys {
 
 	/**
 	 * Gets the current TH's associated with the given user.
+	 * 
 	 * @param login
 	 * @param stmt
 	 * @return
 	 */
-	public ArrayList<TH> getUsersTHs(String login, Statement stmt){
+	public ArrayList<TH> getUsersTHs(String login, Statement stmt) {
 		String sql = "Select * from th where login = '" + login + "';";
 
 		System.out.println("executing: " + sql);
@@ -93,18 +96,20 @@ public class Querys {
 
 		return thList;
 	}
-	
+
 	/**
-	 * Takes the given TH and updates the TH with the same hid in the database to the new values given.
+	 * Takes the given TH and updates the TH with the same hid in the database
+	 * to the new values given.
+	 * 
 	 * @param update
 	 * @param con
 	 * @return
 	 */
-	public TH updateTH(TH update, Connection con){
+	public TH updateTH(TH update, Connection con) {
 		try {
 			PreparedStatement updateTH = con.prepareStatement(
-					"update th set category=?, price = ?, year_built = ?, name = ?, address = ?, url = ?, phone = ?, login = ?, date_listed = ?" +
-					"where hid = ?");
+					"update th set category=?, price = ?, year_built = ?, name = ?, address = ?, url = ?, phone = ?, login = ?, date_listed = ?"
+							+ "where hid = ?");
 
 			updateTH.setString(1, update.getCategory());
 			updateTH.setInt(2, update.getPrice());
@@ -131,8 +136,10 @@ public class Querys {
 	}
 
 	/**
-	 * This method takes the new user information and persists it into the database. Will then return the new User
-	 * in a User object. Will return null if a user already has taken the login.
+	 * This method takes the new user information and persists it into the
+	 * database. Will then return the new User in a User object. Will return
+	 * null if a user already has taken the login.
+	 * 
 	 * @param login
 	 * @param name
 	 * @param password
@@ -162,11 +169,13 @@ public class Querys {
 
 		return new User(login, password, user_type);
 	}
-	
+
 	/**
-	 * This method attempts to find a column in the database where the login and password match.
-	 * If it does not find one it will return null. If it does it will return a user object that
-	 * has information representing the newly signed in user.
+	 * This method attempts to find a column in the database where the login and
+	 * password match. If it does not find one it will return null. If it does
+	 * it will return a user object that has information representing the newly
+	 * signed in user.
+	 * 
 	 * @param login
 	 * @param password
 	 * @param stmt
@@ -207,16 +216,17 @@ public class Querys {
 		}
 		return null;
 	}
-	
+
 	/**
-	 * This method inserts column into trusts relationship table. This represents that a user trusts
-	 * or does not trust another user.
+	 * This method inserts column into trusts relationship table. This
+	 * represents that a user trusts or does not trust another user.
+	 * 
 	 * @param trustee
 	 * @param truster
 	 * @param trust
 	 * @param stmt
 	 */
-	public void trustUser(String trustee, String truster, boolean trust, Statement stmt){
+	public void trustUser(String trustee, String truster, boolean trust, Statement stmt) {
 		String sql = "insert into trust VALUES (" + "'" + trustee + "','" + truster + "', " + trust + ")";
 		System.out.println("Executing:" + sql);
 
@@ -231,23 +241,26 @@ public class Querys {
 			return;
 		}
 	}
-	
+
 	/**
-	 * This method insert column into favorite relationship table. This represents
-	 * that a user favorites the given th.
+	 * This method insert column into favorite relationship table. This
+	 * represents that a user favorites the given th.
+	 * 
 	 * @param th
 	 * @param login
 	 * @param fv_date
 	 * @param stmt
 	 */
-	public void favoriteTH(TH th, String login, Date fv_date, Statement stmt){
-		String sql = "insert into favorite VALUES (" + Integer.toString(th.getHid()) + ",'" + login + "', '" + fv_date.toString() + "')";
-		//System.out.println("Executing:" + sql);
-		
-		try{
+	public void favoriteTH(TH th, String login, Date fv_date, Statement stmt) {
+		String sql = "insert into favorite VALUES (" + Integer.toString(th.getHid()) + ",'" + login + "', '"
+				+ fv_date.toString() + "')";
+		// System.out.println("Executing:" + sql);
+
+		try {
 			stmt.executeUpdate(sql);
-			System.out.println(login + " now favorites " + "TH with values " + th.toString() + "\n---------------------------------");
-		}catch(java.sql.SQLIntegrityConstraintViolationException e){
+			System.out.println(login + " now favorites " + "TH with values " + th.toString()
+					+ "\n---------------------------------");
+		} catch (java.sql.SQLIntegrityConstraintViolationException e) {
 			System.out.println("You already favorite this place. \n---------------------------------");
 			return;
 		} catch (Exception e) {
@@ -367,22 +380,20 @@ public class Querys {
 	 *         the number of visits in descending order.
 	 */
 	public ArrayList<TH> getMostPopular(Statement stmt) {
-		String sql = "select t.category, t.hid, t.name, t.price, t.address, COUNT(t.hid) " + "from visit v, reserve r, th t "
-				+ "WHERE v.rid = r.rid AND t.hid = h_id " + "GROUP BY t.category, t.hid, t.name, t.price, t.address "
-				+ "ORDER BY t.category, COUNT(t.hid);";
+		String sql = "select t.category, t.hid, t.name, t.price, t.address, "
+				+ "t.year_built, t.url, t.phone, t.login, t.date_listed, "
+				+ "COUNT(t.hid) from visit v, reserve r, th t " + "WHERE v.rid = r.rid AND t.hid = h_id "
+				+ "GROUP BY t.category, t.hid, t.name, t.price, t.address, "
+				+ "t.year_built, t.url, t.phone, t.login, t.date_listed " + "ORDER BY t.category, COUNT(t.hid) DESC;";
 		ResultSet rs = null;
 		ArrayList<TH> thList = new ArrayList<TH>();
 		try {
 			rs = stmt.executeQuery(sql);
-			rs = stmt.executeQuery(sql);
 			while (rs.next()) {
-				TH temp = new TH();
-				temp.setCategory(rs.getString("category"));
-				temp.setHid(rs.getInt("hid"));
-				temp.setName(rs.getString("name"));
-				temp.setPrice(rs.getInt("price"));
-				temp.setAddress(rs.getString("address"));
-				thList.add(temp);
+				TH tempTH = new TH(rs.getInt("hid"), rs.getString("category"), rs.getInt("price"),
+						rs.getString("year_built"), rs.getString("name"), rs.getString("address"), rs.getString("url"),
+						rs.getString("phone"), rs.getString("login"), rs.getDate("date_listed"));
+				thList.add(tempTH);
 			}
 			rs.close();
 		} catch (Exception e) {
@@ -406,20 +417,18 @@ public class Querys {
 	 *         by price of the TH in descending order.
 	 */
 	public ArrayList<TH> getMostExpensive(Statement stmt) {
-		String sql = "select t.category, t.hid, t.name, t.price, t.address " + "from th t " + "ORDER BY t.category, t.price DESC;";
+		String sql = "select t.category, t.hid, t.name, t.price, t.address, "
+				+ "t.year_built, t.url, t.phone, t.login, t.date_listed " + "from th t "
+				+ "ORDER BY t.category, t.price DESC;";
 		ResultSet rs = null;
 		ArrayList<TH> thList = new ArrayList<TH>();
 		try {
 			rs = stmt.executeQuery(sql);
-			rs = stmt.executeQuery(sql);
 			while (rs.next()) {
-				TH temp = new TH();
-				temp.setCategory(rs.getString("category"));
-				temp.setHid(rs.getInt("hid"));
-				temp.setName(rs.getString("name"));
-				temp.setPrice(rs.getInt("price"));
-				temp.setAddress(rs.getString("address"));
-				thList.add(temp);
+				TH tempTH = new TH(rs.getInt("hid"), rs.getString("category"), rs.getInt("price"),
+						rs.getString("year_built"), rs.getString("name"), rs.getString("address"), rs.getString("url"),
+						rs.getString("phone"), rs.getString("login"), rs.getDate("date_listed"));
+				thList.add(tempTH);
 			}
 			rs.close();
 		} catch (Exception e) {
@@ -444,22 +453,19 @@ public class Querys {
 	 *         by the average of all the ratings of the TH in descending order.
 	 */
 	public ArrayList<TH> getHighestRated(Statement stmt) {
-		String sql = "select t.category, t.hid, t.name, t.price, t.address, AVG(f.score) " + "from th t, feedback f "
-				+ "where t.hid = f.hid " + "group by t.category, t.hid, t.name, t.price, t.address "
-				+ "ORDER BY t.category, AVG(f.score) DESC;";
+		String sql = "select t.category, t.hid, t.name, t.price, t.address, AVG(f.score), "
+				+ "t.year_built, t.url, t.phone, t.login, t.date_listed " + "from th t, feedback f "
+				+ "where t.hid = f.hid " + "group by t.category, t.hid, t.name, t.price, t.address, "
+				+ "t.year_built, t.url, t.phone, t.login, t.date_listed " + "ORDER BY t.category, AVG(f.score) DESC;";
 		ResultSet rs = null;
 		ArrayList<TH> thList = new ArrayList<TH>();
 		try {
 			rs = stmt.executeQuery(sql);
-			rs = stmt.executeQuery(sql);
 			while (rs.next()) {
-				TH temp = new TH();
-				temp.setCategory(rs.getString("category"));
-				temp.setHid(rs.getInt("hid"));
-				temp.setName(rs.getString("name"));
-				temp.setPrice(rs.getInt("price"));
-				temp.setAddress(rs.getString("address"));
-				thList.add(temp);
+				TH tempTH = new TH(rs.getInt("hid"), rs.getString("category"), rs.getInt("price"),
+						rs.getString("year_built"), rs.getString("name"), rs.getString("address"), rs.getString("url"),
+						rs.getString("phone"), rs.getString("login"), rs.getDate("date_listed"));
+				thList.add(tempTH);
 			}
 			rs.close();
 		} catch (Exception e) {
@@ -484,7 +490,7 @@ public class Querys {
 	 * @param stmt
 	 * @return
 	 */
-	public ArrayList<String> mostUsefulUser(int limit, Statement stmt){
+	public ArrayList<String> mostUsefulUser(int limit, Statement stmt) {
 		ArrayList<String> loginList = new ArrayList<>();
 		String sql = "select login, sum(score) " + "from feedback " + "group by login " + "order by sum(score) "
 				+ "desc limit " + Integer.toString(limit) + ";";
@@ -532,76 +538,72 @@ public class Querys {
 	public ArrayList<TH> browse(Statement stmt, int max, int min, String city, String state, String keyword,
 			String category, int sort) {
 		boolean hasWhere = false;
-		String sql = "SELECT DISTINCT(t.hid), t.category, t.price, t.name, t.address  " +
-					 "FROM th t LEFT OUTER JOIN has_keyword hk " +
-					 "ON (t.hid = hk.hid) LEFT OUTER JOIN keyword k " +
-					 "ON (hk.wid = k.wid) LEFT OUTER JOIN ";
+		String sql = "SELECT DISTINCT(t.hid), t.category, t.price, t.name, t.address, "
+				+ "t.year_built, t.url, t.phone, t.login, t.date_listed " + "FROM th t LEFT OUTER JOIN has_keyword hk "
+				+ "ON (t.hid = hk.hid) LEFT OUTER JOIN keyword k " + "ON (hk.wid = k.wid) LEFT OUTER JOIN ";
 		// Change query for sorting with only trusted users
-		if (sort == 3){
+		if (sort == 3) {
 			sql += "(select * from feedback f, trust tr where f.login = tr.trustee_id AND tr.is_trusted = 1) as f ";
-		}
-		else{
+		} else {
 			sql += " feedback f ";
 		}
 		sql += "ON (t.hid = f.hid) ";
 		// user wants to set a max
-		if (max != -1){
+		if (max != -1) {
+			hasWhere = true;
 			sql += "WHERE t.price <= " + max + " ";
 		}
 		// user wants to set a min
-		if (min != -1){
-			if (!hasWhere){
+		if (min != -1) {
+			if (!hasWhere) {
 				hasWhere = true;
 				sql += "WHERE t.price >= " + min + " ";
-			}
-			else
+			} else
 				sql += "AND t.price >= " + min + " ";
 		}
 		// user wants specific city
-		if (city != null){
-			if (!hasWhere){
+		if (city != null) {
+			if (!hasWhere) {
 				hasWhere = true;
 				sql += "WHERE t.address LIKE '%" + city + "%' ";
-			}
-			else
+			} else
 				sql += "AND t.address LIKE '%" + city + "%' ";
 		}
-		//user wants specific state
-		if (state != null){
-			if (!hasWhere){
+		// user wants specific state
+		if (state != null) {
+			if (!hasWhere) {
 				hasWhere = true;
 				sql += "WHERE t.address LIKE '%" + state + "%' ";
-			}
-			else
+			} else
 				sql += "AND t.address LIKE '%" + state + "%' ";
 		}
 		// user wants specific keyword
-		if (keyword != null){
-			if (!hasWhere){
+		if (keyword != null) {
+			if (!hasWhere) {
 				hasWhere = true;
 				sql += "WHERE k.word LIKE '" + keyword + "' ";
-			}
-			else
+			} else
 				sql += "AND k.word LIKE '" + keyword + "' ";
 		}
 		// user wants specific category
-		if (category != null){
-			if (!hasWhere){
+		if (category != null) {
+			if (!hasWhere) {
 				hasWhere = true;
 				sql += "WHERE t.category LIKE '" + category + "' ";
-			}
-			else
+			} else
 				sql += "AND t.category LIKE '" + category + "' ";
 		}
-		sql += "GROUP BY t.hid, t.category, t.price, t.name, t.address ";
-		
+		sql += "GROUP BY t.hid, t.category, t.price, t.name, t.address, "
+				+ "t.year_built, t.url, t.phone, t.login, t.date_listed ";
+
 		// user wants to sort by price
-		if (sort == 1){
+		if (sort == 1) {
 			sql += "ORDER BY t.price DESC ";
 		}
-		// user wants to sort by score (only by trusted handled above with joining 
+		// user wants to sort by score (only by trusted handled above with
+		// joining
 		// a nested sql statement
-		else if (sort == 2 || sort == 3){
+		else if (sort == 2 || sort == 3) {
 			sql += "ORDER BY AVG(f.score) DESC";
 		}
 		sql += ";";
@@ -611,13 +613,10 @@ public class Querys {
 			rs = stmt.executeQuery(sql);
 			rs = stmt.executeQuery(sql);
 			while (rs.next()) {
-				TH temp = new TH();
-				temp.setCategory(rs.getString("category"));
-				temp.setHid(rs.getInt("hid"));
-				temp.setName(rs.getString("name"));
-				temp.setPrice(rs.getInt("price"));
-				temp.setAddress(rs.getString("address"));
-				thList.add(temp);
+				TH tempTH = new TH(rs.getInt("hid"), rs.getString("category"), rs.getInt("price"),
+						rs.getString("year_built"), rs.getString("name"), rs.getString("address"), rs.getString("url"),
+						rs.getString("phone"), rs.getString("login"), rs.getDate("date_listed"));
+				thList.add(tempTH);
 			}
 			rs.close();
 		} catch (Exception e) {
@@ -633,45 +632,35 @@ public class Querys {
 		}
 		return thList;
 	}
-	
+
 	/**
 	 * Method used to retrieve most useful feedback for a particular th.
+	 * 
 	 * @param selected
 	 * @param limit
 	 * @param stmt
 	 * @return
 	 */
-	public ArrayList<Feedback> mostUsefulFeedback(TH selected, int limit, Statement stmt){
+	public ArrayList<Feedback> mostUsefulFeedback(TH selected, int limit, Statement stmt) {
 		ArrayList<Feedback> feedbackList = new ArrayList<>();
-		String sql = "select * "
-				   + "from feedback "
-				   + "where feedback.fid in ("
-									+ "select feedback.fid "
-									+ "from feedback "
-									+ "left outer join rate "
-									+ "on rate.fid = feedback.fid  "
-									+ "where hid = " + Integer.toString(selected.getHid()) + " "
-									+ "group by feedback.fid "
-									+ "order by sum(rate.rating) desc) "
-				   + "limit " + Integer.toString(limit) + ";";
+		String sql = "select * " + "from feedback " + "where feedback.fid in (" + "select feedback.fid "
+				+ "from feedback " + "left outer join rate " + "on rate.fid = feedback.fid  " + "where hid = "
+				+ Integer.toString(selected.getHid()) + " " + "group by feedback.fid "
+				+ "order by sum(rate.rating) desc) " + "limit " + Integer.toString(limit) + ";";
 
-		//Execute the most useful query and then add each feedback 
+		// Execute the most useful query and then add each feedback
 		ResultSet rs = null;
-		try{
+		try {
 			rs = stmt.executeQuery(sql);
-			while(rs.next()){
-				feedbackList.add(new Feedback(rs.getInt("fid"),
-											  rs.getString("text"),
-											  rs.getDate("date"),
-											  rs.getInt("score"),
-											  rs.getString("login"),
-											  rs.getInt("hid")));
+			while (rs.next()) {
+				feedbackList.add(new Feedback(rs.getInt("fid"), rs.getString("text"), rs.getDate("date"),
+						rs.getInt("score"), rs.getString("login"), rs.getInt("hid")));
 			}
 			rs.close();
-		}catch(Exception e){
+		} catch (Exception e) {
 			System.out.println("cannot execute query: " + sql);
 			return null;
-		}finally {
+		} finally {
 			try {
 				if (rs != null && !rs.isClosed())
 					rs.close();
