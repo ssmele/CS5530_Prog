@@ -1017,7 +1017,7 @@ public class UotelDriver {
 		TH thToBeUpdated = currentUsersTH.get(--index);
 		System.out.println("Current values of TH you are updating: " + thToBeUpdated.toString());
 
-		thToBeUpdated = gatherUpdates(thToBeUpdated, in, con.stmt);
+		thToBeUpdated = gatherUpdates(thToBeUpdated, in, con);
 		q.updateTH(thToBeUpdated, con.con);
 	}
 
@@ -1050,7 +1050,7 @@ public class UotelDriver {
 	 * @param in
 	 * @return The TH object holding the information of the new TH
 	 */
-	public static TH gatherUpdates(TH toUpdate, BufferedReader in, Statement stmt) {
+	public static TH gatherUpdates(TH toUpdate, BufferedReader in, Connector con) {
 		String response = "";
 		String updateValue = null;
 		Querys q = new Querys();
@@ -1075,21 +1075,21 @@ public class UotelDriver {
 				case "Category":
 					// TODO: They may need to select from a list of categories.
 					System.out.println("Enter new Category");
-					while ((updateValue = in.readLine()) == null && updateValue.length() == 0)
+					while ((updateValue = in.readLine()) == null || updateValue.length() == 0)
 						;
 					toUpdate.setCategory(updateValue);
 					break;
 				case "2":
 				case "Price":
 					System.out.println("Enter new Price");
-					while ((updateValue = in.readLine()) == null && updateValue.length() == 0)
+					while ((updateValue = in.readLine()) == null || updateValue.length() == 0)
 						;
 					toUpdate.setPrice(Integer.parseInt(updateValue));
 					break;
 				case "3":
 				case "Year_Built":
 					System.out.println("Enter new Year_Built");
-					while ((updateValue = in.readLine()) == null && updateValue.length() == 0)
+					while ((updateValue = in.readLine()) == null || updateValue.length() == 0)
 						;
 					if (updateValue.length() < 5) {
 						toUpdate.setYear_built((updateValue));
@@ -1100,28 +1100,28 @@ public class UotelDriver {
 				case "4":
 				case "Name":
 					System.out.println("Enter new Name");
-					while ((updateValue = in.readLine()) == null && updateValue.length() == 0)
+					while ((updateValue = in.readLine()) == null || updateValue.length() == 0)
 						;
 					toUpdate.setName(updateValue);
 					break;
 				case "5":
 				case "Address":
 					System.out.println("Enter new Address");
-					while ((updateValue = in.readLine()) == null && updateValue.length() == 0)
+					while ((updateValue = in.readLine()) == null || updateValue.length() == 0)
 						;
 					toUpdate.setAddress(updateValue);
 					break;
 				case "6":
 				case "Url":
 					System.out.println("Enter new URL");
-					while ((updateValue = in.readLine()) == null && updateValue.length() == 0)
+					while ((updateValue = in.readLine()) == null || updateValue.length() == 0)
 						;
 					toUpdate.setUrl(updateValue);
 					break;
 				case "7":
 				case "Phone":
 					System.out.println("Enter new Phone");
-					while ((updateValue = in.readLine()) == null && updateValue.length() == 0)
+					while ((updateValue = in.readLine()) == null || updateValue.length() == 0)
 						;
 					if (updateValue.length() < 11) {
 						toUpdate.setPhone((updateValue));
@@ -1140,7 +1140,7 @@ public class UotelDriver {
 						System.out.println("Please provide a valid keyword");
 					}
 					// Add keyword given by the user.
-					q.addKeywordToHID(updateValue, toUpdate.getHid(), stmt);
+					q.addKeywordToHID(updateValue, toUpdate.getHid(), con.stmt);
 					break;
 				case "10":
 				case "Add availability":
@@ -1151,8 +1151,7 @@ public class UotelDriver {
 													   1,Integer.MAX_VALUE, false);
 					
 					Period new_period = new Period(from, to, price_per_night);
-					
-					q.insertAvalabity(th, new_period, in);
+					q.insertAvailability(toUpdate, new_period, con);
 				case "0":
 				case "Done":
 					System.out.println("Your changes will now be updated.");
