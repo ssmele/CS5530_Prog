@@ -535,9 +535,8 @@ public class Querys {
 	 * @param sort
 	 * @return the returned list of THs matching the parameter constraints
 	 */
-	public ArrayList<TH> browse(Statement stmt, int max, int min, String city, String state, String keyword,
-			String category, int sort) {
-		boolean hasWhere = false;
+	public ArrayList<TH> browse(Statement stmt, ArrayList<KeyValuePair> params, ArrayList<String> operations,
+			int sort) {
 		String sql = "SELECT DISTINCT(t.hid), t.category, t.price, t.name, t.address, "
 				+ "t.year_built, t.url, t.phone, t.login, t.date_listed " + "FROM th t LEFT OUTER JOIN has_keyword hk "
 				+ "ON (t.hid = hk.hid) LEFT OUTER JOIN keyword k " + "ON (hk.wid = k.wid) LEFT OUTER JOIN ";
@@ -547,52 +546,72 @@ public class Querys {
 		} else {
 			sql += " feedback f ";
 		}
+		
 		sql += "ON (t.hid = f.hid) ";
-		// user wants to set a max
-		if (max != -1) {
-			hasWhere = true;
-			sql += "WHERE t.price <= " + max + " ";
+		if (params.size() != 0)
+			sql += "WHERE ";
+		
+		int opIndex = 0;
+		for (KeyValuePair param : params) {
+			
+			// user wants a max price
+			switch (param.getKey()){
+			case "max price":
+				if (params.indexOf(param) != 0){
+					sql += operations.get(opIndex) + " ";
+					opIndex++;
+				}
+				sql += "t.price <= " + param.getValue() + " ";
+				break;
+				
+			// user wants to set a min
+			case "min price":
+				if (params.indexOf(param) != 0){
+					sql += operations.get(opIndex) + " ";
+					opIndex++;
+				}
+				sql += "t.price >= " + param.getValue() + " ";
+				break;
+			
+			// user wants specific city
+			case "city":
+				if (params.indexOf(param) != 0){
+					sql += operations.get(opIndex) + " ";
+					opIndex++;
+				}
+				sql += "t.address LIKE '%" + param.getValue() + "%' ";
+				break;
+			// user wants specific state
+			case "state":
+				if (params.indexOf(param) != 0){
+					sql += operations.get(opIndex) + " ";
+					opIndex++;
+				}
+				sql += "t.address LIKE '%" + param.getValue() + "%' ";
+				break;
+				
+			// user wants specific keyword
+			case "keyword":
+				if (params.indexOf(param) != 0){
+					sql += operations.get(opIndex) + " ";
+					opIndex++;
+				}
+				sql += "k.word LIKE '" + param.getValue() + "' ";
+				break;
+				
+			// user wants specific category
+			case "category":
+				if (params.indexOf(param) != 0){
+					sql += operations.get(opIndex) + " ";
+					opIndex++;
+				}
+				sql += "t.category LIKE '" + param.getValue() + "' ";
+				break;
+			default:
+				continue;
+			}	
 		}
-		// user wants to set a min
-		if (min != -1) {
-			if (!hasWhere) {
-				hasWhere = true;
-				sql += "WHERE t.price >= " + min + " ";
-			} else
-				sql += "AND t.price >= " + min + " ";
-		}
-		// user wants specific city
-		if (city != null) {
-			if (!hasWhere) {
-				hasWhere = true;
-				sql += "WHERE t.address LIKE '%" + city + "%' ";
-			} else
-				sql += "AND t.address LIKE '%" + city + "%' ";
-		}
-		// user wants specific state
-		if (state != null) {
-			if (!hasWhere) {
-				hasWhere = true;
-				sql += "WHERE t.address LIKE '%" + state + "%' ";
-			} else
-				sql += "AND t.address LIKE '%" + state + "%' ";
-		}
-		// user wants specific keyword
-		if (keyword != null) {
-			if (!hasWhere) {
-				hasWhere = true;
-				sql += "WHERE k.word LIKE '" + keyword + "' ";
-			} else
-				sql += "AND k.word LIKE '" + keyword + "' ";
-		}
-		// user wants specific category
-		if (category != null) {
-			if (!hasWhere) {
-				hasWhere = true;
-				sql += "WHERE t.category LIKE '" + category + "' ";
-			} else
-				sql += "AND t.category LIKE '" + category + "' ";
-		}
+
 		sql += "GROUP BY t.hid, t.category, t.price, t.name, t.address, "
 				+ "t.year_built, t.url, t.phone, t.login, t.date_listed ";
 

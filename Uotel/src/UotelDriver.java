@@ -336,7 +336,7 @@ public class UotelDriver {
 			}
 			if (num == 0)
 				return;
-			if (num == 1){
+			if (num == 1) {
 				handleFavoriteTH(usr, th, in, con.stmt);
 			}
 			if (num == 2){
@@ -348,6 +348,7 @@ public class UotelDriver {
 			if (num == 5){
 				handleMostUsefulFeedback(th, in, con.stmt);
 			}
+
 		}
 	}
 	
@@ -450,29 +451,31 @@ public class UotelDriver {
 	
 	/**
 	 * Handler for when a user wants to favorite a TH.
+	 * 
 	 * @param usr
 	 * @param th
 	 * @param in
 	 * @param stmt
 	 */
-	public static void handleFavoriteTH(User usr, TH th, BufferedReader in, Statement stmt){
+	public static void handleFavoriteTH(User usr, TH th, BufferedReader in, Statement stmt) {
 		Querys q = new Querys();
 		q.favoriteTH(th, usr.getLogin(), Date.valueOf(LocalDate.now()), stmt);
 	}
-	
+
 	/**
-	 * THis method is used to get the most useful feed back for a certain th. Makes use of method in the Queries
-	 * class to do so.
+	 * THis method is used to get the most useful feed back for a certain th.
+	 * Makes use of method in the Queries class to do so.
+	 * 
 	 * @param th
 	 * @param in
 	 * @param stmt
 	 */
-	public static void handleMostUsefulFeedback(TH th, BufferedReader in, Statement stmt){
+	public static void handleMostUsefulFeedback(TH th, BufferedReader in, Statement stmt) {
 		int limit;
 		System.out.println("What is the max number of Feedback you would like displayed?");
 		while (true) {
 			try {
-				//Check to see if the user wants to go back.
+				// Check to see if the user wants to go back.
 				limit = Integer.parseInt(in.readLine());
 				if (limit < 1) {
 					System.out.println("Please try again limit must be 1 or greater.");
@@ -483,24 +486,23 @@ public class UotelDriver {
 				System.out.println("Please try again with a valid number.");
 			}
 		}
-		
+
 		Querys q = new Querys();
 		ArrayList<Feedback> feedbackList = q.mostUsefulFeedback(th, limit, stmt);
 		System.out.println("Most useful feedback:");
 		int count = 1;
-		for(Feedback feed : feedbackList){
+		for (Feedback feed : feedbackList) {
 			System.out.println(Integer.toString(count) + "." + feed.toString());
 			count++;
 		}
-		
-		if(feedbackList.isEmpty()){
+
+		if (feedbackList.isEmpty()) {
 			System.out.println("No feedback for this particular TH.");
 		}
 		System.out.println("-----------------------------");
 		return;
 	}
-	
-	
+
 	/**
 	 * This method is called whenever a list of THs are displayed to the user.
 	 * This will allow the user to select one of the THs displayed to them to
@@ -526,7 +528,8 @@ public class UotelDriver {
 						System.out.println("  " + category);
 					}
 				}
-				System.out.println(count + ".  name: " + th.getName() + "    price: $" + th.getPrice() + "    address: " + th.getAddress());
+				System.out.println(count + ".  name: " + th.getName() + "    price: $" + th.getPrice() + "    address: "
+						+ th.getAddress());
 				count++;
 			}
 			System.out.println("Enter a house number to view it or 0 to go back");
@@ -679,41 +682,139 @@ public class UotelDriver {
 		String category = null;
 		String prompt = null;
 		String error = null;
+		ArrayList<String> operations = new ArrayList<String>();
+		ArrayList<KeyValuePair> params =new ArrayList<KeyValuePair>();
+		ArrayList<KeyValuePair> origParams = new ArrayList<KeyValuePair>();
+		System.out.println("We will ask for values and will then be able to reorder "
+				+ "the parameters and specify an 'and' or 'or' operation\n");
 
 		// Get the max price value
 		prompt = "Please enter a maximum price [no preference]";
 		error = "Please enter a valid option";
 		maxPrice = promptForInt(in, prompt, error, 0, Integer.MAX_VALUE, true);
-		
+		if (maxPrice != -1)
+			origParams.add(new KeyValuePair("max price", Integer.toString(maxPrice)));
+
 		// Get the min price value
 		prompt = "Please enter a minimum price [no preference]";
 		minPrice = promptForInt(in, prompt, error, 0, maxPrice, true);
-		
+		if (minPrice != -1)
+			origParams.add(new KeyValuePair("min price", Integer.toString(minPrice)));
+
 		// Get the City
 		prompt = "Please enter a city [no preference]";
 		city = promptForString(in, prompt, error, true);
-		
+		if (city != null)
+			origParams.add(new KeyValuePair("city", city));
+
 		// Get the State
 		prompt = "Please enter a state [no preference]";
 		state = promptForString(in, prompt, error, true);
-		
+		if (state != null)
+			origParams.add(new KeyValuePair("state", state));
+
 		// Get a keyword
 		prompt = "Please enter a keyword [no preference]";
 		keyword = promptForString(in, prompt, error, true);
-		
+		if (keyword != null)
+			origParams.add(new KeyValuePair("keyword", keyword));
 		// Get a category
 		prompt = "Please enter a category [no preference]";
 		category = promptForString(in, prompt, error, true);
-		
+		if (category != null)
+			origParams.add(new KeyValuePair("category", category));
+		if (origParams.size() > 1) {
+			if (origParams.size() > 2)
+				params = getOrdering(in, origParams);
+			else
+				params = origParams;
+			operations = getOperations(in, params);
+		}
 		// Get sort value
 		displayHouseFilters();
 		prompt = "Please pick a filter";
 		error = "Please choose a valid option";
 		sort = promptForInt(in, prompt, error, 1, 4, false);
-		
+
 		Querys q = new Querys();
-		ArrayList<TH> retList = q.browse(con.stmt, maxPrice, minPrice, city, state, keyword, category, sort);
+		ArrayList<TH> retList = q.browse(con.stmt, params, operations, sort);
 		viewTHs(retList, con, in, usr, false);
+	}
+
+	/***
+	 * This method allows for a user to reorder the browsing parameters.
+	 * 
+	 * @param in
+	 * @param original
+	 * @return an arraylist of strings containing the users desired ordering of
+	 *         browsing parameters.
+	 * @throws IOException
+	 */
+	public static ArrayList<KeyValuePair> getOrdering(BufferedReader in, ArrayList<KeyValuePair> original) throws IOException {
+		int count = 1;
+		System.out.println("Please input the desired ordering of the parameters you specified (ex. 132)");
+		for (KeyValuePair s : original) {
+			System.out.println(count + ". " + s.getKey());
+			count++;
+		}
+		while (true) {
+			String input = null;
+			while ((input = in.readLine()) == null && input.length() == 0)
+				;
+			input = input.trim();
+			try {
+				Integer.parseInt(input);
+			} catch (Exception e) {
+				System.out.println("Please input a valid option");
+				continue;
+			}
+			if (input.length() != original.size()) {
+				System.out.println("Too many numbers given. Please try again");
+				continue;
+			}
+			try {
+				ArrayList<Integer> retNums = new ArrayList<Integer>();
+				char[] nums = input.toCharArray();
+				for (char c : nums) {
+					int next = c - 49;
+					if (next < 0 || next >= original.size() || retNums.contains(next)) {
+						System.out.println("Incorrect format. You may not have any "
+								+ "duplicate or unspecified numbers. Please try again.");
+						Exception e = new Exception();
+						throw e;
+					}
+					retNums.add(next);
+				}
+				ArrayList<KeyValuePair> retList = new ArrayList<KeyValuePair>();
+				for (int i : retNums){
+					retList.add(original.get(i));
+				}
+				return retList;
+			} catch (Exception e) {
+				continue;
+			}
+		}
+	}
+	
+	/***
+	 * @param in
+	 * @param params
+	 * @return an array list containing 'and's and/or 'or's
+	 * @throws IOException 
+	 */
+	public static ArrayList<String> getOperations(BufferedReader in, ArrayList<KeyValuePair> params) throws IOException{
+		ArrayList<String> ops = new ArrayList<String>();
+		for(int i = 0; i < params.size() - 1; i++){
+			String prompt = "Which operation would you like between " + params.get(i).getKey() 
+			+ " and " + params.get(i+1).getKey() + "? Select 1 or 'AND' and 2 for 'OR'";
+			String error = "Please select either 1 or 2";
+			int input = promptForInt(in, prompt, error, 1, 2, false);
+			if (input == 1)
+				ops.add("AND");
+			else
+				ops.add("OR");
+		}
+		return ops;
 	}
 
 	/**
@@ -753,10 +854,9 @@ public class UotelDriver {
 	}
 
 	/***
-	 * Prompts the user for a string value with the provided prompt.
-	 * If nullable is specified, a user may enter nothing.
-	 * If nullable is false and an input string is empty, gives the  
-	 * user the provided error and tries again.
+	 * Prompts the user for a string value with the provided prompt. If nullable
+	 * is specified, a user may enter nothing. If nullable is false and an input
+	 * string is empty, gives the user the provided error and tries again.
 	 * 
 	 * @param in
 	 * @param prompt
@@ -774,7 +874,7 @@ public class UotelDriver {
 				;
 			if (tempString.trim().length() == 0 && nullable)
 				return null;
-			else if (tempString.trim().length() == 0){
+			else if (tempString.trim().length() == 0) {
 				System.out.println(error);
 				continue;
 			}
@@ -841,7 +941,7 @@ public class UotelDriver {
 	public static Date promptForDate(BufferedReader in){
 		Date userDate = null;
 		System.out.println("Please provide a date in the following format 'YYYY-mm-dd'");
-		
+
 		while (true) {
 			try {
 				userDate = Date.valueOf(in.readLine());
@@ -850,10 +950,10 @@ public class UotelDriver {
 				System.out.println("Bad format please try again.");
 			}
 		}
-		
+
 		return userDate;
 	}
-	
+
 	/***
 	 * This method prompts the user to give details of a new TH and creates a
 	 * temporary house object out of that information.
