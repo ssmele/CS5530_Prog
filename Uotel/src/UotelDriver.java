@@ -1,4 +1,5 @@
 import java.io.*;
+import java.sql.Connection;
 import java.sql.Date;
 import java.sql.Statement;
 import java.text.DateFormat;
@@ -128,9 +129,6 @@ public class UotelDriver {
 			case 0:
 				// case for logout
 				return;
-			case 1:
-				// Case for reservation
-				break;
 			case 2:
 				// Case for listing
 				handleListing(con, in, usr);
@@ -333,7 +331,10 @@ public class UotelDriver {
 			if (num == 1) {
 				handleFavoriteTH(usr, th, in, con.stmt);
 			}
-			if (num == 6) {
+			if (num == 4){
+				handleReservation(usr, th, in, con);
+			}
+			if (num == 6){
 				handleMostUsefulFeedback(th, in, con.stmt);
 			}
 
@@ -346,7 +347,46 @@ public class UotelDriver {
 			 */
 		}
 	}
-
+	
+	public static void handleReservation(User usr, TH th, BufferedReader in, Connector con) throws IOException{
+		Querys q = new Querys();
+		
+		//First get dates available
+		ArrayList<Period> avaDates = q.getAvailability(th, con.stmt);
+		
+		//Ask user which one
+		int count = 0;
+		System.out.println("Period # | From   | To   | Price per night. ");
+		for(Period p : avaDates){
+			
+			System.out.println(Integer.toString(count) + ".       |" + " " 
+							   + p.getFrom().toString()
+							   + " | " + p.getTo().toString()
+							   + " | " + Integer.toString(p.getPrice()));
+		}
+		
+		if(avaDates.isEmpty()){
+			System.out.println("No availabilties for this TH please try another.");
+			return;
+		}
+		
+		int period_num = promptForInt(in,
+				        "What period do you want to make a reservation for",
+					    "Period does not exist try again.", 1, avaDates.size(), false);
+		
+		Period intended_period = avaDates.get(--period_num);
+		
+		//Insert into price.
+		Reservation new_res = q.insertReservation(usr, th, intended_period, con.con);
+		
+		//Let user know it was a success.
+		System.out.println("You reservation has been made at " + th.getName() + " during  " 
+						  + new_res.getFrom().toString() 
+						  + " to " 
+				          + new_res.getTo().toString()
+				          + " for " + Integer.toString(new_res.getPrice_per_night()) + " a night");
+	}
+	
 	/**
 	 * Handler for when a user wants to favorite a TH.
 	 * 
@@ -977,7 +1017,6 @@ public class UotelDriver {
 	public static void displayOperations(boolean isAdmin) {
 		System.out.println("      Home     ");
 		System.out.println("0. logout");
-		System.out.println("1. Make a reservation");
 		System.out.println("2. Create a listing");
 		System.out.println("3. Alter a listing");
 		System.out.println("4. Record a stay");
