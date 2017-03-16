@@ -681,4 +681,66 @@ public class Querys {
 		}
 		return feedbackList;
 	}
+	
+	
+	public ArrayList<Period> getAvailability(TH th, Statement stmt){
+		ArrayList<Period> periodList = new ArrayList<>();
+		String sql = "select * from available, period where  available.hid = " + th.getHid() + " and period.pid = available.pid;";
+
+		//Execute the most useful query and then add each feedback 
+		ResultSet rs = null;
+		try{
+			rs = stmt.executeQuery(sql);
+			while(rs.next()){
+				periodList.add(new Period(rs.getDate("fromt"), rs.getDate("to"), rs.getInt("price_per_night")));
+			}
+			rs.close();
+		}catch(Exception e){
+			System.out.println("cannot execute query: " + sql);
+			return null;
+		}finally {
+			try {
+				if (rs != null && !rs.isClosed())
+					rs.close();
+			} catch (Exception e) {
+				System.out.println("cannot close resultset");
+			}
+		}
+		return periodList;
+	}
+	
+	/**
+	 * This method inserts a new reservation into the database with the values given.
+	 * Gets hid from the TH, price, from, and to from the Period, and login from user.
+	 * @param user
+	 * @param th
+	 * @param p
+	 * @param con
+	 * @return
+	 */
+	public Reservation insertReservation(User user, TH th, Period p, Connection con){
+		try {
+			PreparedStatement insertRes = con.prepareStatement(
+					"insert into reserve (from, to, price_per_night, login, url) "
+							+ "values (?, ?, ?, ?, ?)");
+
+			insertRes.setDate(1, p.getFrom());
+			insertRes.setDate(2, p.getTo());
+			insertRes.setInt(3, p.getPrice());
+			insertRes.setString(4, user.getLogin());
+			insertRes.setInt(5, th.getHid());
+
+			insertRes.executeUpdate();
+			// TODO: DOnt really know what exceptions could get thrown here need
+			// to do more experimenting.
+		} catch (java.sql.SQLIntegrityConstraintViolationException e) {
+			System.out.println("Something went wrong pleas try again.");
+			return null;
+		} catch (Exception e) {
+			System.out.println("cannot execute the query");
+			return null;
+		}
+		
+		return new Reservation(-1, p.getFrom(), p.getTo(), p.getPrice(), user.getLogin(), th.getHid());
+	}
 }
