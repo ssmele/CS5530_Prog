@@ -149,7 +149,8 @@ public class UotelDriver {
 				// view suggested houses
 				break;
 			case 7:
-				// view similar users
+				// Determine two degree separation
+				handleSeparation(con, in);
 				break;
 			case 11:
 				// Most trusted.
@@ -294,6 +295,69 @@ public class UotelDriver {
 		}
 		System.out.println("-----------------------------");
 		return;
+	}
+	
+	/***
+	 * This method obtains two user logins from the user and prints yes or no
+	 * if the two users have a 2-degree separation.
+	 * @param con
+	 * @param in
+	 * @throws IOException 
+	 */
+	public static void handleSeparation(Connector con, BufferedReader in) throws IOException{
+		String user1 = null;
+		String user2 = null;
+		String prompt;
+		String error;
+		Querys q = new Querys();
+		System.out.println("Enter 0 at any time to go back");
+		// Get the first user
+		while (true){
+			prompt = "Please enter the login of the first user";
+			error = "Please enter a valid login";
+			user1 = promptForString(in, prompt, error, false).trim();
+			try{
+				if (Integer.parseInt(user1) == 0)
+					return;
+			}
+			catch (Exception e){
+			}
+			if (q.isValidLog(con.stmt, user1))
+				break;
+			System.out.println("The login you entered is not in our system!");
+			continue;
+		}
+		// Get the second user
+		while (true){
+			prompt = "Please enter the login of the second user";
+			error = "Please enter a valid login";
+			user2 = promptForString(in, prompt, error, false).trim();
+			try{
+				if (Integer.parseInt(user2) == 0)
+					return;
+			}
+			catch (Exception e){
+			}
+			if (q.isValidLog(con.stmt, user2))
+				break;
+			System.out.println("The login you entered is not in our system!");
+			continue;
+		}
+		if (q.twoDegreeSeparated(con.stmt, user1, user2)){
+			System.out.println("Yes, " + user1 + " and " + user2 + " are 2-degree separated!");
+		}
+		else{
+			System.out.println("No, " + user1 + " and " + user2 +  " are not 2-degree separated.");
+		}
+		prompt = "Enter 0 to go back to home, or 1 to try again";
+		error = "Please enter either 0 or 1";
+		int out = promptForInt(in, prompt, error, 0, 1, false);
+		if (out == 0)
+			return;
+		else{
+			handleSeparation(con, in);
+			return;
+		}
 	}
 
 	/***
@@ -624,51 +688,6 @@ public class UotelDriver {
 					break;
 				}
 			}
-		}
-	}
-
-	/**
-	 * Method used to handle when a TH has been choosen by a user to view, and
-	 * either favorite, rate, or view stuff about it.
-	 * 
-	 * @param thInQuestion
-	 * @param in
-	 */
-	public static void handleHousingOptions(TH thInQuestion, BufferedReader in) {
-		String response = null;
-		try {
-			while (!response.equals("Done")) {
-				displayHouseOptions();
-				System.out.println("Please enter value of action you want to take.");
-				response = in.readLine();
-				switch (response) {
-				case "1":
-					// favorite
-					break;
-				case "2":
-					// feed back
-					break;
-				case "3":
-					// give feed back
-					break;
-				case "4":
-					// make a res.
-					break;
-				case "5":
-					// record a stay
-					break;
-				case "6":
-					// get feedback
-					break;
-				case "7":
-					return;
-				default:
-					System.out.print("Didnt match any updatable values. Please try again.");
-				}
-			}
-		} catch (Exception e) {
-			System.out.println("Something went wrong updating values. Pleas try again.");
-			return;
 		}
 	}
 
@@ -1020,7 +1039,6 @@ public class UotelDriver {
 				System.out.println("Bad format please try again.");
 			}
 		}
-
 		return userDate;
 	}
 
@@ -1159,7 +1177,7 @@ public class UotelDriver {
 		System.out.println("4. Record a stay");
 		System.out.println("5. Search for a house");
 		System.out.println("6. View suggested houses");
-		System.out.println("7. View similar users");
+		System.out.println("7. Determine two degree seperation");
 		System.out.println("8. View most popular houses by category");
 		System.out.println("9. View most expensive by category");
 		System.out.println("10. View highest rated by category");

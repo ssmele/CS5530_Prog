@@ -633,7 +633,6 @@ public class Querys {
 				continue;
 			}	
 		}
-
 		sql += "GROUP BY t.hid, t.category, t.price, t.name, t.address, "
 				+ "t.year_built, t.url, t.phone, t.login, t.date_listed ";
 
@@ -651,7 +650,6 @@ public class Querys {
 		ResultSet rs = null;
 		ArrayList<TH> thList = new ArrayList<TH>();
 		try {
-			rs = stmt.executeQuery(sql);
 			rs = stmt.executeQuery(sql);
 			while (rs.next()) {
 				TH tempTH = new TH(rs.getInt("hid"), rs.getString("category"), rs.getInt("price"),
@@ -672,6 +670,75 @@ public class Querys {
 			}
 		}
 		return thList;
+	}
+	
+	/***
+	 * This method determines if two users are 2-degree separated.
+	 * @param stmt
+	 * @param log1
+	 * @param log2
+	 * @return boolean (true if 2-degree separated, false if otherwise)
+	 */
+	public boolean twoDegreeSeparated(Statement stmt, String user1, String user2){
+		boolean retVal = false;
+		String sql = "select f1.hid "
+				+ "from favorite f1, favorite f2, favorite f3, favorite f4 "
+				+ "WHERE f1.login = '" + user1 + "' "
+				+ "AND f4.login = '" + user2 + "' "
+				+ "AND f1.hid = f2.hid "
+				+ "AND f3.hid = f4.hid "
+				+ "AND f2.login = f3.login "
+				+ "AND not exists (select f1.hid from "
+				+ "favorite f1, favorite f2 "
+				+ "WHERE f1.hid = f2.hid "
+				+ "AND f1.login = '" + user1 + "' "
+				+ "AND f2.login = '" + user2 + "');";
+		ResultSet rs = null;
+		try {
+			rs = stmt.executeQuery(sql);
+			retVal = rs.next();
+			rs.close();
+		}
+		catch (Exception e) {
+			System.out.println("cannot execute query: " + sql);
+			return retVal;
+		} finally {
+			try {
+				if (rs != null && !rs.isClosed())
+					rs.close();
+			} catch (Exception e) {
+				System.out.println("cannot close resultset");
+			}
+		}
+		return retVal;
+	}
+	
+	/***
+	 * @param stmt
+	 * @param login
+	 * @return true if the login belongs to an existing user, false if otherwise.
+	 */
+	public boolean isValidLog(Statement stmt, String login){
+		String sql = "SELECT * FROM user WHERE login = '" + login + "';";
+		ResultSet rs = null;
+		boolean retVal = false;
+		try {
+			rs = stmt.executeQuery(sql);
+			retVal = rs.next();
+			rs.close();
+		}
+		catch (Exception e) {
+			System.out.println("cannot execute query: " + sql);
+			return retVal;
+		} finally {
+			try {
+				if (rs != null && !rs.isClosed())
+					rs.close();
+			} catch (Exception e) {
+				System.out.println("cannot close resultset");
+			}
+		}
+		return retVal;
 	}
 
 	/**
