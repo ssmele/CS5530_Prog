@@ -791,7 +791,7 @@ public class UotelDriver {
 		if(suggestedList.isEmpty()){
 			System.out.println("No suggested TH's currently so lets continue!");
 		}else{	
-			viewTHs(q.getSuggestedTHS(con.stmt, th, usr), con, in, usr, false, reservationCart);
+			viewTHs(suggestedList, con, in, usr, false, reservationCart);
 		}
 	}
 	
