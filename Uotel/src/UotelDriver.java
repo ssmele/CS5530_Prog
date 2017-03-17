@@ -785,7 +785,14 @@ public class UotelDriver {
 				          + new_res.getTo().toString()
 				          + " for " + Integer.toString(new_res.getPrice_per_night()) + " a night!");
 		System.out.println("Here are a list of THs based on your reservation:");
-		viewTHs(q.getSuggestedTHS(con.stmt, th, usr), con, in, usr, false, reservationCart);
+		
+		//Make sure we have suggestions to show.
+		ArrayList<TH> suggestedList = q.getSuggestedTHS(con.stmt, th, usr);
+		if(suggestedList.isEmpty()){
+			System.out.println("No suggested TH's currently so lets continue!");
+		}else{	
+			viewTHs(q.getSuggestedTHS(con.stmt, th, usr), con, in, usr, false, reservationCart);
+		}
 	}
 	
 	/**
