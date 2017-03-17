@@ -4,6 +4,7 @@ import java.sql.Date;
 import java.sql.Statement;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashSet;
 
 public class UotelDriver {
 
@@ -22,12 +23,11 @@ public class UotelDriver {
 		int c = 0;
 		try {
 			con = new Connector();
-			Querys q = new Querys();
 			BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
 
 			while (true) {
 				displayLogin();
-				while ((choice = in.readLine()) == null && choice.length() == 0)
+				while ((choice = in.readLine()) == null || choice.length() == 0)
 					;
 				try {
 					c = Integer.parseInt(choice);
@@ -38,44 +38,16 @@ public class UotelDriver {
 					continue;
 				// Case for logging in
 				if (c == 1) {
-					String login, password;
-					System.out.println("please enter login:");
-					while ((login = in.readLine()) == null || login.length() == 0)
-						;
-					System.out.println("please enter a password:");
-					while ((password = in.readLine()) == null || password.length() == 0)
-						;
-					User usr = q.loginUser(login, password, con.stmt);
+					User usr = loginUser(in, con.stmt);
 					if (usr != null) {
 						applicationDriver(con, in, usr);
 					}
 					// Case for creating a new account
 				} else if (c == 2) {
-					String login, password, name, address, phone;
-					System.out.println("please enter login:");
-					while ((login = in.readLine()) == null || login.length() == 0)
-						;
-					System.out.println("please enter a password:");
-					while ((password = in.readLine()) == null || password.length() == 0)
-						;
-
-					System.out.println("please enter your name:");
-					while ((name = in.readLine()) == null || name.length() == 0)
-						;
-
-					System.out.println("please enter your address:");
-					while ((address = in.readLine()) == null || address.length() == 0)
-						;
-
-					System.out.println("please enter your phone:");
-					while ((phone = in.readLine()) == null || phone.length() == 0)
-						;
-
-					User user = q.newUser(login, name, password, address, phone, false, con.stmt);
+					User user = registerUser(in, con.stmt);
 					if (user != null) {
 						applicationDriver(con, in, user);
 					}
-					// TODO: handle the case for creating an account
 				} else if (c == 3)
 					return;
 				else {
@@ -97,7 +69,7 @@ public class UotelDriver {
 			}
 		}
 	}
-
+	
 	/**
 	 * This method drives the application once the user has established a
 	 * connection and logged in.
@@ -168,58 +140,307 @@ public class UotelDriver {
 		}
 	}
 	
+	/**
+	 * This is the handler for when ever a th is selected. Has various operations that a user can do on a th.
+	 * @param th
+	 * @param con
+	 * @param in
+	 * @param usr
+	 * @param reservationCart
+	 * @throws IOException
+	 */
+	public static void thSelected(TH th, Connector con, BufferedReader in, User usr, ArrayList<ResPeriodPair> reservationCart) throws IOException {
+		System.out.println("Currently selected TH: " + th.toString());
+		while (true) {
+			displayHouseOptions();
+			System.out.println("Select an option number or 0 to go back to the list");
+			String input = null;
+			while ((input = in.readLine()) == null || input.length() == 0)
+				;
+			int num = -1;
+			try {
+				num = Integer.parseInt(input);
+			} catch (Exception e) {
+				System.out.println("Please enter a valid option");
+				continue;
+			}
+			if (num == 0)
+				return;
+			if (num == 1) {
+				handleFavoriteTH(usr, th, in, con.stmt);
+			}
+			if (num == 2){
+				handleViewFeedback(in, th, usr, con);
+			}
+			if (num == 3){
+				handleGiveFeedback(in, th, usr, con.con);
+			}
+			if (num == 4){
+				handleReservation(usr, th, in, con, reservationCart);
+			}
+			if (num == 5){
+				handleMostUsefulFeedback(th, in, con.stmt);
+			}
+
+		}
+	}
+
+	/***
+	 * This method prompts the user to give details of a new TH and creates a
+	 * temporary house object out of that information.
+	 * 
+	 * @param toUpdate
+	 * @param in
+	 * @return The TH object holding the information of the new TH
+	 */
+	public static TH gatherUpdates(TH toUpdate, BufferedReader in, Connector con) {
+		String response = "";
+		String updateValue = null;
+		Querys q = new Querys();
+		try {
+			while (!response.equals("Done")) {
+				System.out.println("Updatable Fields:");
+				System.out.println("0.Done (When you want to stop updating)");
+				System.out.println("1.Category");
+				System.out.println("2.Price");
+				System.out.println("3.Year_Built");
+				System.out.println("4.Name");
+				System.out.println("5.Address");
+				System.out.println("6.Url");
+				System.out.println("7.Phone");
+				System.out.println("9.Keywords");
+				System.out.println("10. Availabilities)");
+				System.out.println("Please enter name or number of value you want to update.");
+				response = in.readLine();
+				switch (response) {
+				case "1":
+				case "Category":
+					// TODO: They may need to select from a list of categories.
+					System.out.println("Enter new Category");
+					while ((updateValue = in.readLine()) == null || updateValue.length() == 0 || updateValue.length() > 40) {
+						System.out.println("Invalid response please try again.");
+					}					
+					toUpdate.setCategory(updateValue);
+					break;
+				case "2":
+				case "Price":
+					int new_price = promptForInt(in, "Enter new price", "Invalid response please try again", 0, Integer.MAX_VALUE, false);
+					toUpdate.setPrice(new_price);
+					break;
+				case "3":
+				case "Year_Built":
+					System.out.println("Enter new Year_Built");
+					while ((updateValue = in.readLine()) == null || updateValue.length() == 0 
+							|| updateValue.length() > 4 || !updateValue.matches("[0-9]+")) {
+						System.out.println("Invalid response please try again.");
+					}
+				    toUpdate.setYear_built((updateValue));
+					break;
+				case "4":
+				case "Name":
+					System.out.println("Enter new Name");
+					while ((updateValue = in.readLine()) == null || updateValue.length() == 0 || updateValue.length() > 45) {
+						System.out.println("Invalid response please try again.");
+					}
+					toUpdate.setName(updateValue);
+					break;
+				case "5":
+				case "Address":
+					System.out.println("Enter new Address");
+					while ((updateValue = in.readLine()) == null || updateValue.length() == 0 || updateValue.length() > 75) {
+						System.out.println("Invalid response please try again.");
+					}
+					toUpdate.setAddress(updateValue);
+					break;
+				case "6":
+				case "Url":
+					System.out.println("Enter new URL");
+					while ((updateValue = in.readLine()) == null || updateValue.length() == 0 || updateValue.length() > 45) {
+						System.out.println("Invalid response please try again.");
+					}
+					toUpdate.setUrl(updateValue);
+					break;
+				case "7":
+				case "Phone":
+					System.out.println("Enter new Phone");
+					while ((updateValue = in.readLine()) == null || updateValue.length() == 0 || updateValue.length() > 10) {
+						System.out.println("Invalid response please try again.");
+					}
+					toUpdate.setPhone(updateValue);
+					break;
+					//TODO: SHOULD THIS BE UPDATABLE.
+//				case "Date_Listed":
+//				case "8":
+//					toUpdate.setDate_listed(promptForDate(in));
+//					break;
+				case "9":
+				case "Keywords":
+					System.out.println("Please enter a keyword to add to your TH");
+					while ((updateValue = in.readLine()) == null || updateValue.length() == 0 || updateValue.length() > 50) {
+						System.out.println("Please provide a valid keyword");
+					}
+					
+					// Add keyword given by the user.
+					q.addKeywordToHID(updateValue, toUpdate.getHid(), con.stmt);
+					break;
+				case "10":
+				case "Availabilities":
+					System.out.println("Please provide a start and end of this availability.");
+					Date from = promptForDate(in, "Start of availability? (YYYY-MM-DD)");
+					Date to = promptForDate(in, "End of availability?  (YYYY-MM-DD)");
+					int price_per_night = promptForInt(in, "Please provide a price_per_night during this availability", "Invalid entry please try again!", 
+													   1,Integer.MAX_VALUE, false);
+					
+					Period new_period = new Period(-1, from, to, price_per_night);
+					q.insertAvailability(toUpdate, new_period, con);
+				case "0":
+				case "Done":
+					System.out.println("Your changes will now be updated.");
+					return toUpdate;
+				default:
+					System.out.print("Didnt match any updatable values. Please try again.");
+				}
+			}
+		} catch (Exception e) {
+			System.out.println("Something went wrong updating values. Pleas try again.");
+			return null;
+		}
+		return toUpdate;
+	}
+
+	
+	/**
+	 * Method used to log users in. Make use of the Querys class to validate login and password.
+	 * @param in
+	 * @param stmt
+	 * @return
+	 * @throws IOException 
+	 */
+	public static User loginUser(BufferedReader in, Statement stmt) throws IOException{
+		String login, password;
+		System.out.println("please enter login:");
+		while ((login = in.readLine()) == null || login.length() == 0)
+			;
+		System.out.println("please enter a password:");
+		while ((password = in.readLine()) == null || password.length() == 0)
+			;
+		
+		Querys q = new Querys(); 
+		return q.loginUser(login, password, stmt);
+	}
+	
+	/**
+	 * Method used to register a user.
+	 * @param in
+	 * @param stmt
+	 * @return
+	 * @throws IOException
+	 */
+	public static User registerUser(BufferedReader in, Statement stmt) throws IOException{
+		//Gathering information 
+		String login, password, name, address, phone;
+		System.out.println("please enter login:");
+		while ((login = in.readLine()) == null || login.length() == 0)
+			;
+		System.out.println("please enter a password:");
+		while ((password = in.readLine()) == null || password.length() == 0)
+			;
+
+		System.out.println("please enter your name:");
+		while ((name = in.readLine()) == null || name.length() == 0)
+			;
+
+		System.out.println("please enter your address:");
+		while ((address = in.readLine()) == null || address.length() == 0)
+			;
+
+		System.out.println("please enter your phone:");
+		while ((phone = in.readLine()) == null || phone.length() == 0)
+			;
+		
+		//Add the user to the database.
+		Querys q = new Querys();
+		return q.newUser(login, name, password, address, phone, false, stmt);
+	}
+	
 	public static void handleLogOut(BufferedReader in, User user, Connection con, ArrayList<Reservation> visitCart, ArrayList<ResPeriodPair> reservationCart) throws IOException{
 		//First show all reservations
 		// If they want to remove then remove it from the list. Also have to
 		// know remove visit from the list too.
 		// Ask user which one
-		
-		//Purge any bad reservations.
-		System.out.println("Do you want to get rid of any reservations before checkout?");
-		while(true){
-			int count = 1;
-			System.out.println("Reservation # | Reservation information");
-			for (ResPeriodPair pair : reservationCart) {
-				System.out.println(Integer.toString(count) + ".       | " + pair.getReservation().toString());
-				count++;
-			}
-			
-			int value = promptForInt(in, "Type number of reservation you want to get rid of. If none press 0.", "Try again inavlid input", 0, reservationCart.size(), false);
-			if(value == 0){
-				break;
-			}else{
-				reservationCart.remove(--value);
-			}
-		}
-		
-		//Purge any bad visits.
-		System.out.println("Do you want to get rid of any visits before checkout?");
-		while(true){
-			int count = 1;
-			System.out.println("Visit # | Visit information");
-			for (Reservation visit : visitCart) {
-				System.out.println(Integer.toString(count) + ".       | " + visit.toString());
-				count++;
-			}
-			
-			int value = promptForInt(in, "Type number of visit you want to get rid of. If none press 0.", "Try again inavlid input", 0, reservationCart.size(), false);
-			if(value == 0){
-				break;
-			}else{
-				visitCart.remove(--value);
-			}
-		}
-		
 		Querys q = new Querys();
-		//Inserting reservations.
-		q.insertReservations(user, reservationCart, con);
 		
-		//Inserting visits
-		q.insertVisits(user, visitCart, con);
 		
+		if (!reservationCart.isEmpty()) {
+			// Purge any bad reservations.
+			System.out.println("Do you want to get rid of any reservations before checkout?");
+			while (true) {
+				int count = 1;
+				System.out.println("Reservation # | Reservation information");
+				for (ResPeriodPair pair : reservationCart) {
+					System.out.println(Integer.toString(count) + ".       | " + pair.getReservation().toString());
+					count++;
+				}
+				
+				if(count == 0){
+					System.out.println("No more reservations left, lets move onto visits.");
+					break;
+				}
 
-		// Next show all visits.
-		// No special case for removing I believe.
+				int value = promptForInt(in, "Type number of reservation you want to get rid of. If none press 0.",
+						"Try again inavlid input", 0, reservationCart.size(), false);
+				if (value == 0) {
+					break;
+				} else {
+					reservationCart.remove(--value);
+				}
+			}
+			
+			//Gather all the pids from the periods user is making reservation for.
+			ArrayList<Integer> pidList = new ArrayList<>();
+			for(ResPeriodPair pair: reservationCart){
+				pidList.add(pair.getPeriod().getPid());
+			}
+			
+			//Inserting reservations, and deleting available periods so other users can reserve th at same time.
+			q.deletePeriods(pidList, con);
+			q.insertReservations(user, reservationCart, con);
+		}else{
+			System.out.println("No reservations to review!");
+		}
+		
+		if (!visitCart.isEmpty()) {
+			// Purge any bad visits.
+			System.out.println("Do you want to get rid of any visits before checkout?");
+			while (true) {
+				int count = 1;
+				System.out.println("Visit # | Visit information");
+				for (Reservation visit : visitCart) {
+					System.out.println(Integer.toString(count) + ".       | " + visit.toString());
+					count++;
+				}
+				
+				if(count == 0){
+					System.out.println("No more visits left, lets finish the checkout.");
+					break;
+				}
+				
+				int value = promptForInt(in, "Type number of visit you want to get rid of. If none press 0.",
+						"Try again inavlid input", 0, reservationCart.size(), false);
+				if (value == 0) {
+					break;
+				} else {
+					visitCart.remove(--value);
+				}
+			}
+			
+			//Inserting visits
+			q.insertVisits(user, visitCart, con);
+		}else{
+			System.out.println("No visits to review!");
+		}
+		
+		System.out.println("Thank you for using Uotel " + user.getLogin() + "!");
 	}
 	
 	/**
@@ -426,42 +647,6 @@ public class UotelDriver {
 		}
 		return retList;
 	}
-
-	public static void thSelected(TH th, Connector con, BufferedReader in, User usr, ArrayList<ResPeriodPair> reservationCart) throws IOException {
-		System.out.println("Currently selected TH: " + th.toString());
-		while (true) {
-			displayHouseOptions();
-			System.out.println("Select an option number or 0 to go back to the list");
-			String input = null;
-			while ((input = in.readLine()) == null || input.length() == 0)
-				;
-			int num = -1;
-			try {
-				num = Integer.parseInt(input);
-			} catch (Exception e) {
-				System.out.println("Please enter a valid option");
-				continue;
-			}
-			if (num == 0)
-				return;
-			if (num == 1) {
-				handleFavoriteTH(usr, th, in, con.stmt);
-			}
-			if (num == 2){
-				handleViewFeedback(in, th, usr, con);
-			}
-			if (num == 3){
-				handleGiveFeedback(in, th, usr, con.con);
-			}
-			if (num == 4){
-				handleReservation(usr, th, in, con, reservationCart);
-			}
-			if (num == 5){
-				handleMostUsefulFeedback(th, in, con.stmt);
-			}
-
-		}
-	}
 	
 	//TODO: implement this thing WOO WOO SWAG!
 	public static void handleGiveFeedback(BufferedReader in, TH th, User usr, Connection con) throws IOException{
@@ -473,9 +658,7 @@ public class UotelDriver {
 		
 		//Get date for the 
 		//TODO: Should this be user inputed?
-		Date date;
-		prompt = "Please provide the date of this feedback.";
-		date = promptForDate(in);
+		Date date = Date.valueOf(LocalDate.now());
 		
 		int score;
 		prompt = "Please enter a score (0 = terrible, 10 = excellent)";
@@ -547,25 +730,31 @@ public class UotelDriver {
 		
 		visitCart.add(visitedReservation);
 	}
+	
 //TODO: stone, test, 8, 3, 4, 4, 2, 0, 0 casued a bug.
 	public static void handleReservation(User usr, TH th, BufferedReader in, Connector con, ArrayList<ResPeriodPair> reservationCart) throws IOException{
 		Querys q = new Querys();
 		
 		//TODO: Still need to remove the availability. 
-		//TODO: Make period have a pid.
 		//First get dates available
 		ArrayList<Period> avaDates = q.getAvailability(th, con.stmt);
+		
+		//Gather all the pids within the reservation so we don't show periods already in the cart
+		HashSet<Integer> pid_list = new HashSet<>();
+		for(ResPeriodPair pair : reservationCart){
+			pid_list.add(pair.getPeriod().getPid());
+		}
 		
 		//Ask user which one
 		int count = 1;
 		System.out.println("Period # | From       | To         | Price per night. ");
 	 	for(Period p : avaDates){
-			
-			System.out.println(Integer.toString(count) + ".       |" + " " 
-							   + p.getFrom().toString()
-							   + " | " + p.getTo().toString()
-							   + " | " + Integer.toString(p.getPrice()));
-			count++;
+	 		//We are only going to do this if the pid is not within the reservation cart already.
+			if (!pid_list.contains(p.getPid())) {
+				System.out.println(Integer.toString(count) + ".       |" + " " + p.getFrom().toString() + " | "
+						+ p.getTo().toString() + " | " + Integer.toString(p.getPrice()));
+				count++;
+			}
 		}
 		
 		if(avaDates.isEmpty()){
@@ -573,19 +762,18 @@ public class UotelDriver {
 			return;
 		}
 		
+		//Get period user wants to make a reservation for.
 		int period_num = promptForInt(in,
-				        "What period number do you want to make a reservation for?",
-					    "Period does not exist try again.", 1, avaDates.size(), false);
-		
-		Period intended_period = avaDates.get(--period_num);
-		
-		//Insert into price.
-		Reservation new_res = q.insertReservation(usr, th, intended_period, con.con);
-		
-		if(new_res == null){
-			System.out.println("Couldnt not make reservation. Please try again.");
+				        "What period number do you want to make a reservation for? (Type 0 to go back)",
+					    "Period does not exist try again.", 0, avaDates.size(), false);
+		if(period_num == 0){
 			return;
 		}
+		Period intended_period = avaDates.get(--period_num);
+		
+		//Insert into cart.
+		Reservation new_res = new Reservation(-1, intended_period.getFrom(), intended_period.getTo(),
+				intended_period.getPrice(), usr.getLogin(), th.getHid()); 
 		
 		//Add it to the cart
 		reservationCart.add(new ResPeriodPair(new_res, intended_period));
@@ -718,42 +906,42 @@ public class UotelDriver {
 	 */
 	public static void handleListing(Connector con, BufferedReader in, User usr) throws IOException {
 		// Gather up information for a new TH. #SWAG
-		// TODO: Get price instead of hardcoding it.
 		Querys q = new Querys();
 		String category, year_built, name, address, phone, url, string_price;
 		int price = 0;
 
 		System.out.println("Please enter th category:");
-		while ((category = in.readLine()) == null || category.length() == 0) {
+		while ((category = in.readLine()) == null || category.length() == 0 || category.length() > 40) {
 			System.out.println("Invalid response please try again.");
 		}
 
 		System.out.println("Please enter year th was built:");
-		while ((year_built = in.readLine()) == null || year_built.length() == 0) {
+		while ((year_built = in.readLine()) == null || year_built.length() == 0 
+				|| year_built.length() > 4 || !year_built.matches("[0-9]+")) {
 			System.out.println("Invalid response please try again.");
 		}
 
-		System.out.println("Please enter name of TH:");
-		while ((name = in.readLine()) == null || name.length() == 0) {
+		System.out.println("Please enter name of th:");
+		while ((name = in.readLine()) == null || name.length() == 0 || name.length() > 45) {
 			System.out.println("Invalid response please try again.");
 		}
 
 		System.out.println("Please enter th phone:");
-		while ((phone = in.readLine()) == null || phone.length() == 0) {
+		while ((phone = in.readLine()) == null || phone.length() == 0 || phone.length() > 10) {
 			System.out.println("Invalid response please try again.");
 		}
 
-		System.out.println("Please enter your address:");
-		while ((address = in.readLine()) == null || address.length() == 0) {
+		System.out.println("Please enter th address:");
+		while ((address = in.readLine()) == null || address.length() == 0 || address.length() > 75) {
 			System.out.println("Invalid response please try again.");
 		}
 
-		System.out.println("Please enter your url:");
-		while ((url = in.readLine()) == null || url.length() == 0) {
+		System.out.println("Please enter th url:");
+		while ((url = in.readLine()) == null || url.length() == 0 || url.length() > 45) {
 			System.out.println("Invalid response please try again.");
 		}
 
-		System.out.println("Please enter price of TH per night:");
+		System.out.println("Please enter price of th per night:");
 		while ((string_price = in.readLine()) == null || string_price.length() == 0 || price <= 0) {
 			try {
 				price = Integer.parseInt(string_price);
@@ -1007,29 +1195,17 @@ public class UotelDriver {
 			return;
 		}
 
+		//Display current TH's to the user.
 		System.out.println("Current TH's you have listed:");
 		int count = 1;
 		for (TH th : currentUsersTH) {
-			System.out.println("TH number:" + count);
-			System.out.println("   With Values: " + th.toString());
+			System.out.println("TH number:" + count + " | " + th.prettyString());
 			count++;
 		}
 
 		// Get thg user wants to update.
-		System.out.println("Please type in the number of the th you want to update: ");
-		int index = -1;
-		while (true) {
-			try {
-				index = Integer.parseInt(in.readLine());
-				if (index > currentUsersTH.size() || index < 1) {
-					System.out.println("Please try again invalid th.");
-					continue;
-				}
-				break;
-			} catch (Exception e) {
-				System.out.println("Please try again invalid th.");
-			}
-		}
+		int index = promptForInt(in, "Please type in the number of the th you want to update: ", 
+									 "Invalid selection please try again!", 1, currentUsersTH.size(), false);
 
 		// Get th to update.
 		TH thToBeUpdated = currentUsersTH.get(--index);
@@ -1044,9 +1220,9 @@ public class UotelDriver {
 	 * @param in
 	 * @return
 	 */
-	public static Date promptForDate(BufferedReader in){
+	public static Date promptForDate(BufferedReader in, String prompt){
 		Date userDate = null;
-		System.out.println("Please provide a date in the following format 'YYYY-mm-dd'");
+		System.out.println(prompt);
 
 		while (true) {
 			try {
@@ -1058,132 +1234,7 @@ public class UotelDriver {
 		}
 		return userDate;
 	}
-
-	/***
-	 * This method prompts the user to give details of a new TH and creates a
-	 * temporary house object out of that information.
-	 * 
-	 * @param toUpdate
-	 * @param in
-	 * @return The TH object holding the information of the new TH
-	 */
-	public static TH gatherUpdates(TH toUpdate, BufferedReader in, Connector con) {
-		String response = "";
-		String updateValue = null;
-		Querys q = new Querys();
-		try {
-			while (!response.equals("Done")) {
-				System.out.println("Updatable Fields:");
-				System.out.println("0.Done (When you want to stop updating)");
-				System.out.println("1.Category");
-				System.out.println("2.Price");
-				System.out.println("3.Year_Built");
-				System.out.println("4.Name");
-				System.out.println("5.Address");
-				System.out.println("6.Url");
-				System.out.println("7.Phone");
-				System.out.println("8.Date_Listed");
-				System.out.println("9.Keywords");
-				System.out.println("10. Add availability)");
-				System.out.println("Please enter name or number of value you want to update.");
-				response = in.readLine();
-				switch (response) {
-				case "1":
-				case "Category":
-					// TODO: They may need to select from a list of categories.
-					System.out.println("Enter new Category");
-					while ((updateValue = in.readLine()) == null || updateValue.length() == 0)
-						;
-					toUpdate.setCategory(updateValue);
-					break;
-				case "2":
-				case "Price":
-					System.out.println("Enter new Price");
-					while ((updateValue = in.readLine()) == null || updateValue.length() == 0)
-						;
-					toUpdate.setPrice(Integer.parseInt(updateValue));
-					break;
-				case "3":
-				case "Year_Built":
-					System.out.println("Enter new Year_Built");
-					while ((updateValue = in.readLine()) == null || updateValue.length() == 0)
-						;
-					if (updateValue.length() < 5) {
-						toUpdate.setYear_built((updateValue));
-					} else {
-						System.out.println("Year value cant be greater than 4 digits.");
-					}
-					break;
-				case "4":
-				case "Name":
-					System.out.println("Enter new Name");
-					while ((updateValue = in.readLine()) == null || updateValue.length() == 0)
-						;
-					toUpdate.setName(updateValue);
-					break;
-				case "5":
-				case "Address":
-					System.out.println("Enter new Address");
-					while ((updateValue = in.readLine()) == null || updateValue.length() == 0)
-						;
-					toUpdate.setAddress(updateValue);
-					break;
-				case "6":
-				case "Url":
-					System.out.println("Enter new URL");
-					while ((updateValue = in.readLine()) == null || updateValue.length() == 0)
-						;
-					toUpdate.setUrl(updateValue);
-					break;
-				case "7":
-				case "Phone":
-					System.out.println("Enter new Phone");
-					while ((updateValue = in.readLine()) == null || updateValue.length() == 0)
-						;
-					if (updateValue.length() < 11) {
-						toUpdate.setPhone((updateValue));
-					} else {
-						System.out.println("Phone value cant be greater than 10  digits.");
-					}
-					break;
-				case "Date_Listed":
-				case "8":
-					toUpdate.setDate_listed(promptForDate(in));
-					break;
-				case "9":
-				case "Keywords":
-					System.out.println("Please enter a keyword to add to your TH");
-					while ((updateValue = in.readLine()) == null || updateValue.length() == 0) {
-						System.out.println("Please provide a valid keyword");
-					}
-					// Add keyword given by the user.
-					q.addKeywordToHID(updateValue, toUpdate.getHid(), con.stmt);
-					break;
-				case "10":
-				case "Add availability":
-					System.out.println("Please provide a from and a to date for this availability.");
-					Date from = promptForDate(in);
-					Date to = promptForDate(in);
-					int price_per_night = promptForInt(in, "Please provide a price_per_night during this availability", "Invalid entry please try again!", 
-													   1,Integer.MAX_VALUE, false);
-					
-					Period new_period = new Period(from, to, price_per_night);
-					q.insertAvailability(toUpdate, new_period, con);
-				case "0":
-				case "Done":
-					System.out.println("Your changes will now be updated.");
-					return toUpdate;
-				default:
-					System.out.print("Didnt match any updatable values. Please try again.");
-				}
-			}
-		} catch (Exception e) {
-			System.out.println("Something went wrong updating values. Pleas try again.");
-			return null;
-		}
-		return toUpdate;
-	}
-
+	
 	/**
 	 * Prompt for login page
 	 */

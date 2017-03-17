@@ -2,6 +2,7 @@ import java.sql.Date;
 
 public class Period {
 	
+	private int pid;
 	private Date from;
 	private Date to;
 	private int price;
@@ -14,8 +15,9 @@ public class Period {
 		this.price = price;
 	}
 
-	public Period(Date from, Date to, int price) {
+	public Period(int pid, Date from, Date to, int price) {
 		super();
+		this.pid = pid;
 		this.from = from;
 		this.to = to;
 		this.price = price;
@@ -32,6 +34,14 @@ public class Period {
 	}
 	public void setTo(Date to) {
 		this.to = to;
+	}
+
+	public int getPid() {
+		return pid;
+	}
+
+	public void setPid(int pid) {
+		this.pid = pid;
 	}
 
 }

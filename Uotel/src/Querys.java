@@ -214,21 +214,20 @@ public class Querys {
 			insertTH.setString(6, url);
 			insertTH.setString(7, phone);
 			insertTH.setString(8, current_user.getLogin());
+			//Taking system time so user cannot lie. Yes swag love it woo woo swag.
 			insertTH.setDate(9, Date.valueOf(LocalDate.now()));
 
 			insertTH.executeUpdate();
-			// TODO: DOnt really know what exceptions could get thrown here need
-			// to do more experimenting.
 		} catch (java.sql.SQLIntegrityConstraintViolationException e) {
-			System.out.println("Pleas provide a valid login.");
+			System.out.println("Something went wrong please try again.");
 			return null;
 		} catch (Exception e) {
 			System.out.println("cannot execute the query");
 			return null;
 		}
 
-		return new TH(-1, category, price, year_built, name, address, url, phone, current_user.getLogin(),
-				Date.valueOf(LocalDate.now()));
+		//Return new TH to the user.
+		return new TH(-1, category, price, year_built, name, address, url, phone, current_user.getLogin(), Date.valueOf(LocalDate.now()));
 
 	}
 
@@ -328,8 +327,8 @@ public class Querys {
 		// Construct beautiful insert statement.
 		String sql = "INSERT INTO user " + "VALUES (" + "'" + login + "','" + name + "','" + password + "','" + address
 				+ "','" + phone + "'," + user_type + ");";
-
-		System.out.println("executing " + sql);
+		
+		//Try and add the user to the database. If an exception is thrown it is most likely user with same login.
 		try {
 			stmt.executeUpdate(sql);
 		} catch (java.sql.SQLIntegrityConstraintViolationException e) {
@@ -339,7 +338,8 @@ public class Querys {
 			System.out.println("cannot execute the query");
 			return null;
 		}
-
+		
+		//Construct a user data object of new info and return it to the user. 
 		return new User(login, password, user_type);
 	}
 
@@ -358,7 +358,9 @@ public class Querys {
 		// Construct sql select statement.
 		String sql = "select * from user where login = '" + login + "' and password = '" + password + "';";
 		ResultSet rs = null;
-		System.out.println("executing " + sql);
+		
+		//Try and execute the login. If less than one result is returned it means the login and password combination is not
+		//present.
 		try {
 			rs = stmt.executeQuery(sql);
 			int count = 0;
@@ -376,7 +378,6 @@ public class Querys {
 				System.out.println("Login, and password do not match.");
 				return null;
 			}
-
 		} catch (Exception e) {
 			System.out.println("Couldnt log you in due to connection error. Please try again.");
 		} finally {
@@ -387,6 +388,7 @@ public class Querys {
 				System.out.println("cannot close resultset");
 			}
 		}
+		
 		return null;
 	}
 
@@ -427,11 +429,11 @@ public class Querys {
 	public void favoriteTH(TH th, String login, Date fv_date, Statement stmt) {
 		String sql = "insert into favorite VALUES (" + Integer.toString(th.getHid()) + ",'" + login + "', '"
 				+ fv_date.toString() + "')";
-		// System.out.println("Executing:" + sql);
 
+		//Execute the insert for the favorites table. 
 		try {
 			stmt.executeUpdate(sql);
-			System.out.println(login + " now favorites " + "TH with values " + th.toString()
+			System.out.println(login + " now favorites " + "TH with values " + th.prettyString()
 					+ "\n---------------------------------");
 		} catch (java.sql.SQLIntegrityConstraintViolationException e) {
 			System.out.println("You already favorite this place. \n---------------------------------");
@@ -990,7 +992,7 @@ public class Querys {
 		try{
 			rs = stmt.executeQuery(sql);
 			while(rs.next()){
-				periodList.add(new Period(rs.getDate("from"), rs.getDate("to"), rs.getInt("price_per_night")));
+				periodList.add(new Period(rs.getInt("pid"), rs.getDate("from"), rs.getDate("to"), rs.getInt("price_per_night")));
 			}
 			rs.close();
 		}catch(Exception e){
@@ -1177,5 +1179,32 @@ public class Querys {
 		
 		return feedbackList;
 		
+	}
+	
+	/**
+	 * This method will take all the pids and delete any periods with those pids.
+	 * @param pidList
+	 * @param con
+	 */
+	public void deletePeriods(ArrayList<Integer> pidList, Connection con) {
+		try {
+			PreparedStatement deletePids = con
+					.prepareStatement("delete from period where pid = ?;");
+			
+			//Make a batch statement that will delete all the pids.
+			for (Integer pid : pidList) {
+				deletePids.setInt(1, pid);
+				
+				deletePids.addBatch();
+			}
+
+			deletePids.executeBatch();
+		} catch (java.sql.SQLIntegrityConstraintViolationException e) {
+			System.out.println("Something went wrong pleas try again.");
+			return;
+		} catch (Exception e) {
+			System.out.println("cannot execute the query");
+			return;
+		}
 	}
 }

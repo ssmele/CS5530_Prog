@@ -46,6 +46,13 @@ public class TH {
 				+ ", date_listed=" + date_listed + "]";
 	}
 
+	public String prettyString(){
+		return "TH Category=" + category + ", price=" + price
+				+ ", TH name=" + name + ", TH address=" + address 
+				+ ", TH website=" + url + ", TH phone=" + phone + ", Owner=" + login
+				+ ", Date Th was listed=" + date_listed + "]"; 
+	}
+	
 	public String getCategory() {
 		return category;
 	}
