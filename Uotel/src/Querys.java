@@ -126,7 +126,7 @@ public class Querys {
 			System.out.println("Youve already given feedback !");
 			return;
 		} catch (Exception e) {
-			System.out.println("cannot execute the query");
+			System.out.println("Cannot execute the period query.");
 			return;
 		}
 		
@@ -982,6 +982,45 @@ public class Querys {
 		return feedbackList;
 	}
 	
+	public void deleteKeyword(TH th, Keyword keyword, Statement stmt){
+		String sql = "delete from has_keyword where has_keyword.wid = " + Integer.toString(keyword.getWid()) + " and has_keyword.hid = " + Integer.toString(th.getHid());
+		
+		try {
+			stmt.executeUpdate(sql);
+			System.out.println("Th no longer has '" + keyword.getWord() + "' keyword!");
+		} catch (java.sql.SQLIntegrityConstraintViolationException e) {
+			System.out.println("Couldnt execute query" + sql);
+			return;
+		} catch (Exception e) {
+			System.out.println("Cannot execute the query.");
+			return;
+		}
+	}
+	
+	public ArrayList<Keyword> getKeywords(TH th, Statement stmt){
+		ArrayList<Keyword> keywodList = new ArrayList<>();
+		String sql = "select * from has_keyword, keyword where has_keyword.hid = "  +  Integer.toString(th.getHid()) + " and has_keyword.wid = keyword.wid;";
+		
+		ResultSet rs = null;
+		try{
+			rs = stmt.executeQuery(sql);
+			while(rs.next()){
+				keywodList.add(new Keyword(rs.getInt("wid"), rs.getString("word")));
+			}
+			rs.close();
+		}catch(Exception e){
+			System.out.println("cannot execute query: " + sql);
+			return null;
+		}finally {
+			try {
+				if (rs != null && !rs.isClosed())
+					rs.close();
+			} catch (Exception e) {
+				System.out.println("cannot close resultset");
+			}
+		}
+		return keywodList;
+	}
 	
 	public ArrayList<Period> getAvailability(TH th, Statement stmt){
 		ArrayList<Period> periodList = new ArrayList<>();

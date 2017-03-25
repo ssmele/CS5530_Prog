@@ -6,6 +6,8 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashSet;
 
+import com.sun.xml.internal.bind.v2.runtime.unmarshaller.XsiNilLoader.Array;
+
 public class UotelDriver {
 
 	/**
@@ -209,7 +211,7 @@ public class UotelDriver {
 				System.out.println("6.Url");
 				System.out.println("7.Phone");
 				System.out.println("9.Keywords");
-				System.out.println("10. Availabilities)");
+				System.out.println("10. Availabilities");
 				System.out.println("Please enter name or number of value you want to update.");
 				response = in.readLine();
 				switch (response) {
@@ -275,14 +277,40 @@ public class UotelDriver {
 //					break;
 				case "9":
 				case "Keywords":
-					System.out.println("Please enter a keyword to add to your TH");
-					while ((updateValue = in.readLine()) == null || updateValue.length() == 0 || updateValue.length() > 50) {
-						System.out.println("Please provide a valid keyword");
+					System.out.println("Current keywords assocaited with this TH:");
+					ArrayList<Keyword> keywordList = q.getKeywords(toUpdate, con.stmt);
+					System.out.println("0. Back");
+					int i;
+					for (i = 0; i < keywordList.size(); i++) {
+						System.out.println(Integer.toString(i + 1) + ". " + keywordList.get(i).getWord());
+
+					}
+					System.out.println(Integer.toString(i+1) + ". Add keyword!");
+
+					// If its empty report to the user that there's nothing for them to do
+					// here.
+					if (keywordList.isEmpty()) {
+						System.out.println("This TH has no keywords assocaited with it yet.");
+						break;
 					}
 					
-					// Add keyword given by the user.
-					q.addKeywordToHID(updateValue, toUpdate.getHid(), con.stmt);
-					break;
+					int keywordNum = promptForInt(in, "Please enter a valid option.", "Invalid number", 0, keywordList.size() + 1, false);
+					
+					if(keywordNum == 0){
+						break;
+					}else if(keywordNum >= 1 && keywordNum < i+1){
+						q.deleteKeyword(toUpdate, keywordList.get(--keywordNum), con.stmt);
+						break;
+					}else if(keywordNum == i+1){
+						System.out.println("Please enter a keyword to add to your TH");
+						while ((updateValue = in.readLine()) == null || updateValue.length() == 0 || updateValue.length() > 50) {
+							System.out.println("Please provide a valid keyword");
+						}
+						
+						// Add keyword given by the user.
+						q.addKeywordToHID(updateValue, toUpdate.getHid(), con.stmt);
+						break;
+					}
 				case "10":
 				case "Availabilities":
 					System.out.println("Please provide a start and end of this availability.");
@@ -791,7 +819,7 @@ public class UotelDriver {
 		if(suggestedList.isEmpty()){
 			System.out.println("No suggested TH's currently so lets continue!");
 		}else{	
-			viewTHs(suggestedList, con, in, usr, false, reservationCart);
+			viewTHs(suggestedList	, con, in, usr, false, reservationCart);
 		}
 	}
 	
