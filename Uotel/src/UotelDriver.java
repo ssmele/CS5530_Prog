@@ -741,14 +741,31 @@ public class UotelDriver {
 				return;
 			}
 			
-			int feedbackNum = promptForInt(in, "If you want to rate one of the feedbacks below type its number. If you want to continue type 0:", "Invalid number", 0, feedbackList.size(), false);
+			int feedbackNum = promptForInt(in, "If you want to rate one of feedbacks, or trust a user below type number. If you want to continue type 0:", "Invalid number", 0, feedbackList.size(), false);
+			
+			if(feedbackList.get(--feedbackNum).getLogin() == usr.getLogin()){
+				System.out.println("You cannot rate your own feedback!");
+				continue;
+			}
 			
 			if(feedbackNum == 0){
 				return;
 			}
 			
-			int rating = promptForInt(in, "Providing a rating please. 0-useless, 1-useful, 2-very useful.", "Invalid rating only 0-useless, 1-useful, 1-very useful", 0, 2, false);
-			q.insertRating(usr, feedbackList.get(--feedbackNum).getFid(), rating, con.con);
+			System.out.println("Rate feedback, or Trust user:");
+			System.out.println("0. Rating feedback");
+			System.out.println("1. Trusting user");
+			int ratingOrFeedback = promptForInt(in, "Please provide a valid option", "Invalid choice.", 0, 1, false);
+			if(ratingOrFeedback == 0){
+				int rating = promptForInt(in, "Providing a rating please. 0-useless, 1-useful, 2-very useful.", "Invalid rating only 0-useless, 1-useful, 1-very useful", 0, 2, false);
+				q.insertRating(usr, feedbackList.get(--feedbackNum).getFid(), rating, con.con);
+			}else{
+				System.out.println("Do you trust this user or not trust this user.");
+				System.out.println("0. Not-Trusted");
+				System.out.println("1. Trusted");
+				int trustedOrNot = promptForInt(in, "Please provide a valid option", "Invalid choice.", 0, 1, false);
+				q.trustUser(feedbackList.get(--feedbackNum).getLogin(), usr.getLogin(), (trustedOrNot == 0) ? false : true, con.stmt);
+			}
 		}
 
 	}
