@@ -404,13 +404,12 @@ public class Querys {
 	 */
 	public void trustUser(String trustee, String truster, boolean trust, Statement stmt) {
 		String sql = "insert into trust VALUES (" + "'" + trustee + "','" + truster + "', " + trust + ")";
-		System.out.println("Executing:" + sql);
 
 		try {
 			stmt.executeUpdate(sql);
-			System.out.println(truster + " now " + (trust ? "does " : "dosn't ") + trustee);
+			System.out.println(truster + " now " + (trust ? "does trust " : "doesn't trust") + trustee);
 		} catch (java.sql.SQLIntegrityConstraintViolationException e) {
-			System.out.println("One of the user logins provided does not exist.");
+			System.out.println("You have already given a trust rating on this user.");
 			return;
 		} catch (Exception e) {
 			System.out.println("Cannot execute the query.");
@@ -941,10 +940,10 @@ public class Querys {
 	 */
 	public ArrayList<Feedback> mostUsefulFeedback(TH selected, int limit, Statement stmt) {
 		ArrayList<Feedback> feedbackList = new ArrayList<>();
-		String sql = "select * " + "from feedback " + "where feedback.fid in (" + "select feedback.fid "
-				+ "from feedback " + "left outer join rate " + "on rate.fid = feedback.fid  " + "where hid = "
-				+ Integer.toString(selected.getHid()) + " " + "group by feedback.fid "
-				+ "order by sum(rate.rating) desc) " + "limit " + Integer.toString(limit) + ";";
+		String sql = "select f.fid, f.date, f.text, f.score, f.login, f.hid from feedback f "
+				+ "left outer join rate on rate.fid = f.fid where hid = " + Integer.toString(selected.getHid())
+				+ " group by f.fid, f.date, f.text, f.score, f.login, f.hid order by avg(rate.rating) desc limit "
+				+ Integer.toString(limit) + ";";
 
 		// Execute the most useful query and then add each feedback
 		ResultSet rs = null;

@@ -751,15 +751,16 @@ public class UotelDriver {
 				return;
 			}
 			
-			int feedbackNum = promptForInt(in, "If you want to rate one of feedbacks, or trust a user below type number. If you want to continue type 0:", "Invalid number", 0, feedbackList.size(), false);
-			
-			if(feedbackList.get(--feedbackNum).getLogin() == usr.getLogin()){
-				System.out.println("You cannot rate your own feedback!");
-				continue;
-			}
+			int feedbackNum = promptForInt(in, "If you want to rate one of feedbacks, or trust a user below type number. "
+					+ "If you want to continue type 0:", "Invalid number", 0, feedbackList.size(), false);
 			
 			if(feedbackNum == 0){
 				return;
+			}
+			
+			if(feedbackList.get(feedbackNum - 1).getLogin().equals(usr.getLogin())){
+				System.out.println("You cannot rate or trust your own feedback!");
+				continue;
 			}
 			
 			System.out.println("Rate feedback, or Trust user:");
