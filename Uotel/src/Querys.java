@@ -1,5 +1,6 @@
 import java.sql.Date;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -11,15 +12,16 @@ public class Querys {
 	public Querys() {
 	}
 
-	public void insertFeedback(User usr, TH th, String text, int score, Date date, Connection con){
-		
-		//First need to do checks to ensure user does nto own the th they are reviewing, and that they have not review this th before.
-		String ownershipCheck = "select * from th where th.hid = " + Integer.toString(th.getHid()) + " and th.login = '" + usr.getLogin() + "'";
-		String alreadyCheck = "select * from feedback where feedback.login = '" + usr.getLogin()+ "' and feedback.hid = " + Integer.toString(th.getHid()) + ";";
-		
-		
-		
-		//Checking for ownership.
+	public void insertFeedback(User usr, TH th, String text, int score, Date date, Connection con) {
+
+		// First need to do checks to ensure user does nto own the th they are
+		// reviewing, and that they have not review this th before.
+		String ownershipCheck = "select * from th where th.hid = " + Integer.toString(th.getHid()) + " and th.login = '"
+				+ usr.getLogin() + "'";
+		String alreadyCheck = "select * from feedback where feedback.login = '" + usr.getLogin()
+				+ "' and feedback.hid = " + Integer.toString(th.getHid()) + ";";
+
+		// Checking for ownership.
 		ResultSet rs = null;
 		int count = 0;
 		try {
@@ -39,14 +41,13 @@ public class Querys {
 				System.out.println("cannot close resultset");
 			}
 		}
-		
-		if (count > 0){
+
+		if (count > 0) {
 			System.out.println("You own this TH you cant leave it feedback.");
 			return;
 		}
-		
-		
-		//Checking to see if this user has already left a review.
+
+		// Checking to see if this user has already left a review.
 		rs = null;
 		count = 0;
 		try {
@@ -66,20 +67,17 @@ public class Querys {
 				System.out.println("cannot close resultset");
 			}
 		}
-		
-		if (count > 0){
+
+		if (count > 0) {
 			System.out.println("You have already left feedback at this TH.");
 			return;
 		}
-		
-		
 
-		//Finally insert the feedback if it has passed all the tests.
+		// Finally insert the feedback if it has passed all the tests.
 		try {
 			PreparedStatement insertRating = con.prepareStatement(
-					"insert into feedback (text, date, score, login, hid) "
-							+ "values (?, ?, ?, ?, ?)");
-			
+					"insert into feedback (text, date, score, login, hid) " + "values (?, ?, ?, ?, ?)");
+
 			insertRating.setString(1, text);
 			insertRating.setDate(2, date);
 			insertRating.setInt(3, score);
@@ -87,7 +85,7 @@ public class Querys {
 			insertRating.setInt(5, th.getHid());
 
 			insertRating.executeUpdate();
-			
+
 		} catch (java.sql.SQLIntegrityConstraintViolationException e) {
 			System.out.println("Youve already given feedback !");
 			return;
@@ -95,13 +93,13 @@ public class Querys {
 			System.out.println("cannot execute the query");
 			return;
 		}
-		
-		
+
 		System.out.println("Succesfully left feedback on " + th.getName());
 	}
-	
+
 	/**
 	 * Insert a new ava for a given Th.
+	 * 
 	 * @param th
 	 * @param period
 	 * @param con
@@ -113,12 +111,12 @@ public class Querys {
 		try {
 			PreparedStatement insertPeriod = con.con.prepareStatement(
 					"insert into period (period.from, period.to) " + "values (?, ?);", Statement.RETURN_GENERATED_KEYS);
-			
+
 			insertPeriod.setDate(1, period.getFrom());
 			insertPeriod.setDate(2, period.getTo());
 
 			insertPeriod.executeUpdate();
-			
+
 			ResultSet rs = insertPeriod.getGeneratedKeys();
 			rs.next();
 			pid = rs.getInt(1);
@@ -130,23 +128,22 @@ public class Querys {
 			System.out.println("Cannot execute the period query.");
 			return;
 		}
-		
-		//Make sure we have a valid pid.
-		if( pid == -1){
+
+		// Make sure we have a valid pid.
+		if (pid == -1) {
 			System.out.println("Something went wrong please try again.");
 			return;
 		}
-		
-		
-		//Insert into ava the new availability. 
+
+		// Insert into ava the new availability.
 		try {
-			PreparedStatement insertAvailable = con.con.prepareStatement(
-					"insert into available " + "values (?, ?, ?);");
-			
+			PreparedStatement insertAvailable = con.con
+					.prepareStatement("insert into available " + "values (?, ?, ?);");
+
 			insertAvailable.setInt(1, th.getHid());
 			insertAvailable.setInt(2, pid);
 			insertAvailable.setInt(3, period.getPrice());
-			
+
 			insertAvailable.executeUpdate();
 		} catch (java.sql.SQLIntegrityConstraintViolationException e) {
 			System.out.println("Youve already declared availabiltiy for this time period.");
@@ -167,9 +164,7 @@ public class Querys {
 	 */
 	public void insertRating(User user, int fid, int rating, Connection con) {
 		try {
-			PreparedStatement insertRating = con.prepareStatement(
-					"insert into rate "
-							+ "values (?, ?, ?)");
+			PreparedStatement insertRating = con.prepareStatement("insert into rate " + "values (?, ?, ?)");
 
 			insertRating.setString(1, user.getLogin());
 			insertRating.setInt(2, fid);
@@ -184,7 +179,7 @@ public class Querys {
 			return;
 		}
 	}
-	
+
 	/**
 	 * Takes in given information and persists a TH in the database with given
 	 * values.
@@ -215,7 +210,8 @@ public class Querys {
 			insertTH.setString(6, url);
 			insertTH.setString(7, phone);
 			insertTH.setString(8, current_user.getLogin());
-			//Taking system time so user cannot lie. Yes swag love it woo woo swag.
+			// Taking system time so user cannot lie. Yes swag love it woo woo
+			// swag.
 			insertTH.setDate(9, Date.valueOf(LocalDate.now()));
 
 			insertTH.executeUpdate();
@@ -227,9 +223,10 @@ public class Querys {
 			return null;
 		}
 
-		//Return new TH to the user.
+		// Return new TH to the user.
 		System.out.println("Congrats your TH has been added!");
-		return new TH(-1, category, price, year_built, name, address, url, phone, current_user.getLogin(), Date.valueOf(LocalDate.now()));
+		return new TH(-1, category, price, year_built, name, address, url, phone, current_user.getLogin(),
+				Date.valueOf(LocalDate.now()));
 
 	}
 
@@ -329,8 +326,9 @@ public class Querys {
 		// Construct beautiful insert statement.
 		String sql = "INSERT INTO user " + "VALUES (" + "'" + login + "','" + name + "','" + password + "','" + address
 				+ "','" + phone + "'," + user_type + ");";
-		
-		//Try and add the user to the database. If an exception is thrown it is most likely user with same login.
+
+		// Try and add the user to the database. If an exception is thrown it is
+		// most likely user with same login.
 		try {
 			stmt.executeUpdate(sql);
 		} catch (java.sql.SQLIntegrityConstraintViolationException e) {
@@ -340,8 +338,8 @@ public class Querys {
 			System.out.println("cannot execute the query");
 			return null;
 		}
-		
-		//Construct a user data object of new info and return it to the user. 
+
+		// Construct a user data object of new info and return it to the user.
 		return new User(login, password, user_type);
 	}
 
@@ -360,9 +358,10 @@ public class Querys {
 		// Construct sql select statement.
 		String sql = "select * from user where login = '" + login + "' and password = '" + password + "';";
 		ResultSet rs = null;
-		
-		//Try and execute the login. If less than one result is returned it means the login and password combination is not
-		//present.
+
+		// Try and execute the login. If less than one result is returned it
+		// means the login and password combination is not
+		// present.
 		try {
 			rs = stmt.executeQuery(sql);
 			int count = 0;
@@ -390,7 +389,7 @@ public class Querys {
 				System.out.println("cannot close resultset");
 			}
 		}
-		
+
 		return null;
 	}
 
@@ -432,7 +431,7 @@ public class Querys {
 		String sql = "insert into favorite VALUES (" + Integer.toString(th.getHid()) + ",'" + login + "', '"
 				+ fv_date.toString() + "')";
 
-		//Execute the insert for the favorites table. 
+		// Execute the insert for the favorites table.
 		try {
 			stmt.executeUpdate(sql);
 			System.out.println(login + " now favorites " + "TH with values " + th.prettyString()
@@ -549,31 +548,24 @@ public class Querys {
 
 		return loginList;
 	}
-	
+
 	/***
-	 * This method takes in the user and the TH they just reserved 
-	 * and finds suggested THs by finding ones where other visitors 
-	 * have visited it and the reserved TH. This method returns that 
-	 * list in order of most number of visits per TH.
+	 * This method takes in the user and the TH they just reserved and finds
+	 * suggested THs by finding ones where other visitors have visited it and
+	 * the reserved TH. This method returns that list in order of most number of
+	 * visits per TH.
 	 * 
 	 * @param stmt
 	 * @param reserved
 	 * @param usr
 	 * @return an array of suggested THs sorted by number of visits
 	 */
-	public ArrayList<TH> getSuggestedTHS(Statement stmt, TH reserved, User usr){
-		String sql = "SELECT * FROM th t, "
-				+ "(SELECT v2.h_id, COUNT(v2.h_id) AS 'cnt' "
-				+ "FROM (SELECT * FROM visit v "
-				+ "NATURAL JOIN reserve r "
-				+ "WHERE r.login != '" + usr.getLogin() + "') AS v1, "
-				+ "(SELECT * FROM visit v "
-				+ "NATURAL JOIN reserve r "
-				+ "WHERE r.login != '" + usr.getLogin() + "') AS v2 "
-				+ "WHERE v1.login = v2.login AND v1.h_id = " + reserved.getHid() + " "
-				+ "AND v1.h_id != v2.h_id "
-				+ "GROUP BY v2.h_id) AS v "
-				+ "WHERE t.hid = v.h_id "
+	public ArrayList<TH> getSuggestedTHS(Statement stmt, TH reserved, User usr) {
+		String sql = "SELECT * FROM th t, " + "(SELECT v2.h_id, COUNT(v2.h_id) AS 'cnt' "
+				+ "FROM (SELECT * FROM visit v " + "NATURAL JOIN reserve r " + "WHERE r.login != '" + usr.getLogin()
+				+ "') AS v1, " + "(SELECT * FROM visit v " + "NATURAL JOIN reserve r " + "WHERE r.login != '"
+				+ usr.getLogin() + "') AS v2 " + "WHERE v1.login = v2.login AND v1.h_id = " + reserved.getHid() + " "
+				+ "AND v1.h_id != v2.h_id " + "GROUP BY v2.h_id) AS v " + "WHERE t.hid = v.h_id "
 				+ "ORDER BY v.cnt DESC;";
 		ResultSet rs = null;
 		ArrayList<TH> thList = new ArrayList<TH>();
@@ -773,36 +765,36 @@ public class Querys {
 		} else {
 			sql += " feedback f ";
 		}
-		
+
 		sql += "ON (t.hid = f.hid) ";
 		if (params.size() != 0)
 			sql += "WHERE ";
-		
+
 		int opIndex = 0;
 		for (KeyValuePair param : params) {
-			
+
 			// user wants a max price
-			switch (param.getKey()){
+			switch (param.getKey()) {
 			case "max price":
-				if (params.indexOf(param) != 0){
+				if (params.indexOf(param) != 0) {
 					sql += operations.get(opIndex) + " ";
 					opIndex++;
 				}
 				sql += "t.price <= " + param.getValue() + " ";
 				break;
-				
+
 			// user wants to set a min
 			case "min price":
-				if (params.indexOf(param) != 0){
+				if (params.indexOf(param) != 0) {
 					sql += operations.get(opIndex) + " ";
 					opIndex++;
 				}
 				sql += "t.price >= " + param.getValue() + " ";
 				break;
-			
+
 			// user wants specific city
 			case "city":
-				if (params.indexOf(param) != 0){
+				if (params.indexOf(param) != 0) {
 					sql += operations.get(opIndex) + " ";
 					opIndex++;
 				}
@@ -810,25 +802,25 @@ public class Querys {
 				break;
 			// user wants specific state
 			case "state":
-				if (params.indexOf(param) != 0){
+				if (params.indexOf(param) != 0) {
 					sql += operations.get(opIndex) + " ";
 					opIndex++;
 				}
 				sql += "t.address LIKE '%" + param.getValue() + "%' ";
 				break;
-				
+
 			// user wants specific keyword
 			case "keyword":
-				if (params.indexOf(param) != 0){
+				if (params.indexOf(param) != 0) {
 					sql += operations.get(opIndex) + " ";
 					opIndex++;
 				}
 				sql += "k.word LIKE '" + param.getValue() + "' ";
 				break;
-				
+
 			// user wants specific category
 			case "category":
-				if (params.indexOf(param) != 0){
+				if (params.indexOf(param) != 0) {
 					sql += operations.get(opIndex) + " ";
 					opIndex++;
 				}
@@ -836,7 +828,7 @@ public class Querys {
 				break;
 			default:
 				continue;
-			}	
+			}
 		}
 		sql += "GROUP BY t.hid, t.category, t.price, t.name, t.address, "
 				+ "t.year_built, t.url, t.phone, t.login, t.date_listed ";
@@ -876,35 +868,28 @@ public class Querys {
 		}
 		return thList;
 	}
-	
+
 	/***
 	 * This method determines if two users are 2-degree separated.
+	 * 
 	 * @param stmt
 	 * @param log1
 	 * @param log2
 	 * @return boolean (true if 2-degree separated, false if otherwise)
 	 */
-	public boolean twoDegreeSeparated(Statement stmt, String user1, String user2){
+	public boolean twoDegreeSeparated(Statement stmt, String user1, String user2) {
 		boolean retVal = false;
-		String sql = "select f1.hid "
-				+ "from favorite f1, favorite f2, favorite f3, favorite f4 "
-				+ "WHERE f1.login = '" + user1 + "' "
-				+ "AND f4.login = '" + user2 + "' "
-				+ "AND f1.hid = f2.hid "
-				+ "AND f3.hid = f4.hid "
-				+ "AND f2.login = f3.login "
-				+ "AND not exists (select f1.hid from "
-				+ "favorite f1, favorite f2 "
-				+ "WHERE f1.hid = f2.hid "
-				+ "AND f1.login = '" + user1 + "' "
+		String sql = "select f1.hid " + "from favorite f1, favorite f2, favorite f3, favorite f4 "
+				+ "WHERE f1.login = '" + user1 + "' " + "AND f4.login = '" + user2 + "' " + "AND f1.hid = f2.hid "
+				+ "AND f3.hid = f4.hid " + "AND f2.login = f3.login " + "AND not exists (select f1.hid from "
+				+ "favorite f1, favorite f2 " + "WHERE f1.hid = f2.hid " + "AND f1.login = '" + user1 + "' "
 				+ "AND f2.login = '" + user2 + "');";
 		ResultSet rs = null;
 		try {
 			rs = stmt.executeQuery(sql);
 			retVal = rs.next();
 			rs.close();
-		}
-		catch (Exception e) {
+		} catch (Exception e) {
 			System.out.println("cannot execute query: " + sql);
 			return retVal;
 		} finally {
@@ -917,13 +902,14 @@ public class Querys {
 		}
 		return retVal;
 	}
-	
+
 	/***
 	 * @param stmt
 	 * @param login
-	 * @return true if the login belongs to an existing user, false if otherwise.
+	 * @return true if the login belongs to an existing user, false if
+	 *         otherwise.
 	 */
-	public boolean isValidLog(Statement stmt, String login){
+	public boolean isValidLog(Statement stmt, String login) {
 		String sql = "SELECT * FROM user WHERE login = '" + login + "';";
 		ResultSet rs = null;
 		boolean retVal = false;
@@ -931,8 +917,7 @@ public class Querys {
 			rs = stmt.executeQuery(sql);
 			retVal = rs.next();
 			rs.close();
-		}
-		catch (Exception e) {
+		} catch (Exception e) {
 			System.out.println("cannot execute query: " + sql);
 			return retVal;
 		} finally {
@@ -983,10 +968,11 @@ public class Querys {
 		}
 		return feedbackList;
 	}
-	
-	public void deleteKeyword(TH th, Keyword keyword, Statement stmt){
-		String sql = "delete from has_keyword where has_keyword.wid = " + Integer.toString(keyword.getWid()) + " and has_keyword.hid = " + Integer.toString(th.getHid());
-		
+
+	public void deleteKeyword(TH th, Keyword keyword, Statement stmt) {
+		String sql = "delete from has_keyword where has_keyword.wid = " + Integer.toString(keyword.getWid())
+				+ " and has_keyword.hid = " + Integer.toString(th.getHid());
+
 		try {
 			stmt.executeUpdate(sql);
 			System.out.println("Th no longer has '" + keyword.getWord() + "' keyword!");
@@ -998,22 +984,23 @@ public class Querys {
 			return;
 		}
 	}
-	
-	public ArrayList<Keyword> getKeywords(TH th, Statement stmt){
+
+	public ArrayList<Keyword> getKeywords(TH th, Statement stmt) {
 		ArrayList<Keyword> keywodList = new ArrayList<>();
-		String sql = "select * from has_keyword, keyword where has_keyword.hid = "  +  Integer.toString(th.getHid()) + " and has_keyword.wid = keyword.wid;";
-		
+		String sql = "select * from has_keyword, keyword where has_keyword.hid = " + Integer.toString(th.getHid())
+				+ " and has_keyword.wid = keyword.wid;";
+
 		ResultSet rs = null;
-		try{
+		try {
 			rs = stmt.executeQuery(sql);
-			while(rs.next()){
+			while (rs.next()) {
 				keywodList.add(new Keyword(rs.getInt("wid"), rs.getString("word")));
 			}
 			rs.close();
-		}catch(Exception e){
+		} catch (Exception e) {
 			System.out.println("cannot execute query: " + sql);
 			return null;
-		}finally {
+		} finally {
 			try {
 				if (rs != null && !rs.isClosed())
 					rs.close();
@@ -1023,42 +1010,43 @@ public class Querys {
 		}
 		return keywodList;
 	}
-	
+
 	/***
 	 * Attempts to delete an entry in available.
+	 * 
 	 * @param stmt
 	 * @param hid
 	 * @param pid
 	 * @return
 	 */
-	public boolean removeAvailable(Statement stmt, int hid, int pid){
+	public boolean removeAvailable(Statement stmt, int hid, int pid) {
 		String sql = "delete from available where hid = " + hid + " and pid = " + pid + ";";
-		try{
+		try {
 			stmt.executeUpdate(sql);
 			return true;
-		}
-		catch (Exception e){
+		} catch (Exception e) {
 			return false;
 		}
 	}
-	
-	public ArrayList<Period> getAvailability(TH th, Statement stmt){
-		ArrayList<Period> periodList = new ArrayList<>();
-		String sql = "select * from available, period where available.hid = " + th.getHid() + 
-				" and period.pid = available.pid and period.from > sysdate();";
 
-		//Execute the most useful query and then add each feedback 
+	public ArrayList<Period> getAvailability(TH th, Statement stmt) {
+		ArrayList<Period> periodList = new ArrayList<>();
+		String sql = "select * from available, period where available.hid = " + th.getHid()
+				+ " and period.pid = available.pid and period.from > sysdate();";
+
+		// Execute the most useful query and then add each feedback
 		ResultSet rs = null;
-		try{
+		try {
 			rs = stmt.executeQuery(sql);
-			while(rs.next()){
-				periodList.add(new Period(rs.getInt("pid"), rs.getDate("from"), rs.getDate("to"), rs.getInt("price_per_night")));
+			while (rs.next()) {
+				periodList.add(new Period(rs.getInt("pid"), rs.getDate("from"), rs.getDate("to"),
+						rs.getInt("price_per_night")));
 			}
 			rs.close();
-		}catch(Exception e){
+		} catch (Exception e) {
 			System.out.println("cannot execute query: " + sql);
 			return null;
-		}finally {
+		} finally {
 			try {
 				if (rs != null && !rs.isClosed())
 					rs.close();
@@ -1068,20 +1056,22 @@ public class Querys {
 		}
 		return periodList;
 	}
-	
+
 	/**
-	 * This method inserts a new reservation into the database with the values given.
-	 * Gets hid from the TH, price, from, and to from the Period, and login from user.
+	 * This method inserts a new reservation into the database with the values
+	 * given. Gets hid from the TH, price, from, and to from the Period, and
+	 * login from user.
+	 * 
 	 * @param user
 	 * @param th
 	 * @param p
 	 * @param con
 	 * @return
 	 */
-	public Reservation insertReservation(User user, TH th, Period p, Connection con){
+	public Reservation insertReservation(User user, TH th, Period p, Connection con) {
 		try {
-			PreparedStatement insertRes = con.prepareStatement(
-					"insert into reserve (reserve.from, reserve.to, price_per_night, login, h_id) "
+			PreparedStatement insertRes = con
+					.prepareStatement("insert into reserve (reserve.from, reserve.to, price_per_night, login, h_id) "
 							+ "values (?, ?, ?, ?, ?)");
 
 			insertRes.setDate(1, p.getFrom());
@@ -1100,24 +1090,24 @@ public class Querys {
 			System.out.println("cannot execute the query");
 			return null;
 		}
-		
+
 		return new Reservation(-1, p.getFrom(), p.getTo(), p.getPrice(), user.getLogin(), th.getHid());
 	}
-	
-	public void insertReservations(User user, ArrayList<ResPeriodPair> pairs, Connection con){
+
+	public void insertReservations(User user, ArrayList<ResPeriodPair> pairs, Connection con) {
 		try {
-			PreparedStatement insertRes = con.prepareStatement(
-					"insert into reserve (reserve.from, reserve.to, price_per_night, login, h_id) "
+			PreparedStatement insertRes = con
+					.prepareStatement("insert into reserve (reserve.from, reserve.to, price_per_night, login, h_id) "
 							+ "values (?, ?, ?, ?, ?)");
-			
-			//Uses batches to add all the reservation period pairs.
-			for(ResPeriodPair pair : pairs){
+
+			// Uses batches to add all the reservation period pairs.
+			for (ResPeriodPair pair : pairs) {
 				insertRes.setDate(1, pair.getPeriod().getFrom());
 				insertRes.setDate(2, pair.getPeriod().getTo());
-				insertRes.setInt(3, pair.getPeriod().getPrice()); 
+				insertRes.setInt(3, pair.getPeriod().getPrice());
 				insertRes.setString(4, user.getLogin());
 				insertRes.setInt(5, pair.getReservation().getHid());
-				
+
 				insertRes.addBatch();
 			}
 			insertRes.executeBatch();
@@ -1128,16 +1118,14 @@ public class Querys {
 			System.out.println("cannot execute the query");
 			return;
 		}
-		
+
 		return;
 	}
-	
-	
-	public void insertVisit(User user, Reservation res, Connection con){
+
+	public void insertVisit(User user, Reservation res, Connection con) {
 		try {
-			PreparedStatement insertRes = con.prepareStatement(
-					"insert into visit (from, to, rid) "
-							+ "values (?, ?, ?)");
+			PreparedStatement insertRes = con
+					.prepareStatement("insert into visit (from, to, rid) " + "values (?, ?, ?)");
 
 			insertRes.setDate(1, res.getFrom());
 			insertRes.setDate(2, res.getTo());
@@ -1154,52 +1142,49 @@ public class Querys {
 			return;
 		}
 	}
-	
-	public void insertVisits(User user, ArrayList<Reservation> res, Connection con){
-		try {
-			PreparedStatement insertRes = con.prepareStatement(
-					"insert into visit (from, to, rid) "
-							+ "values (?, ?, ?)");
 
-			//Add all the visits.
-			for(Reservation r : res){
+	public ArrayList<Reservation> insertVisits(User user, ArrayList<Reservation> res, Connection con) {
+
+		ArrayList<Reservation> failed = new ArrayList<Reservation>();
+		PreparedStatement insertRes;
+		try {
+			insertRes = con.prepareStatement("insert into visit (visit.from, visit.to, rid) " + "values (?, ?, ?)");
+			// Add all the visits.
+			for (Reservation r : res) {
 				insertRes.setDate(1, r.getFrom());
 				insertRes.setDate(2, r.getTo());
 				insertRes.setInt(3, r.getRid());
-				
-				insertRes.addBatch();
+				try {
+					insertRes.executeUpdate();
+				} catch (Exception e) {
+					failed.add(r);
+				}
 			}
-
-			insertRes.executeBatch();
-			// TODO: DOnt really know what exceptions could get thrown here need
-			// to do more experimenting.
-		} catch (java.sql.SQLIntegrityConstraintViolationException e) {
-			System.out.println("Something went wrong pleas try again.");
-			return;
-		} catch (Exception e) {
-			System.out.println("cannot execute the query");
-			return;
+			return failed;
+		} catch (SQLException e1) {
+			System.out.println("Something went wrong");
+			return null;
 		}
 	}
-	
-	
-	public ArrayList<Reservation> getUnstayedReservation(User user, Statement stmt){
-		String sql = "select * from reserve where rid not in (select rid from visit) and login = '" + user.getLogin() + "'";
+
+	public ArrayList<Reservation> getUnstayedReservation(User user, Statement stmt) {
+		String sql = "select * from reserve where rid not in (select rid from visit) and login = '" + user.getLogin()
+				+ "'";
 		ArrayList<Reservation> resList = new ArrayList<>();
 
-		//Execute the most useful query and then add each feedback 
+		// Execute the most useful query and then add each feedback
 		ResultSet rs = null;
-		try{
+		try {
 			rs = stmt.executeQuery(sql);
-			while(rs.next()){
+			while (rs.next()) {
 				resList.add((new Reservation(rs.getInt("rid"), rs.getDate("from"), rs.getDate("to"),
-						                     rs.getInt("price_per_night"), rs.getString("login"), rs.getInt("rid"))));
+						rs.getInt("price_per_night"), rs.getString("login"), rs.getInt("rid"))));
 			}
 			rs.close();
-		}catch(Exception e){
+		} catch (Exception e) {
 			System.out.println("cannot execute query: " + sql);
 			return null;
-		}finally {
+		} finally {
 			try {
 				if (rs != null && !rs.isClosed())
 					rs.close();
@@ -1207,28 +1192,28 @@ public class Querys {
 				System.out.println("cannot close resultset");
 			}
 		}
-		
+
 		return resList;
 	}
-	
-	public ArrayList<Feedback> getFeedbackTH(TH th, Statement stmt){
+
+	public ArrayList<Feedback> getFeedbackTH(TH th, Statement stmt) {
 		String sql = "select * from feedback where feedback.hid = " + Integer.toString(th.getHid()) + ";";
-		
-		
+
 		ArrayList<Feedback> feedbackList = new ArrayList<>();
 
-		//Execute the most useful query and then add each feedback 
+		// Execute the most useful query and then add each feedback
 		ResultSet rs = null;
-		try{
+		try {
 			rs = stmt.executeQuery(sql);
-			while(rs.next()){
-				feedbackList.add((new Feedback(rs.getInt("fid"), rs.getString("text"), rs.getDate("date"), rs.getInt("score"), rs.getString("login"), rs.getInt("hid"))));
+			while (rs.next()) {
+				feedbackList.add((new Feedback(rs.getInt("fid"), rs.getString("text"), rs.getDate("date"),
+						rs.getInt("score"), rs.getString("login"), rs.getInt("hid"))));
 			}
 			rs.close();
-		}catch(Exception e){
+		} catch (Exception e) {
 			System.out.println("cannot execute query: " + sql);
 			return null;
-		}finally {
+		} finally {
 			try {
 				if (rs != null && !rs.isClosed())
 					rs.close();
@@ -1236,25 +1221,26 @@ public class Querys {
 				System.out.println("cannot close resultset");
 			}
 		}
-		
+
 		return feedbackList;
-		
+
 	}
-	
+
 	/**
-	 * This method will take all the pids and delete any periods with those pids.
+	 * This method will take all the pids and delete any periods with those
+	 * pids.
+	 * 
 	 * @param pidList
 	 * @param con
 	 */
 	public void deletePeriods(ArrayList<Integer> pidList, Connection con) {
 		try {
-			PreparedStatement deletePids = con
-					.prepareStatement("delete from period where pid = ?;");
-			
-			//Make a batch statement that will delete all the pids.
+			PreparedStatement deletePids = con.prepareStatement("delete from period where pid = ?;");
+
+			// Make a batch statement that will delete all the pids.
 			for (Integer pid : pidList) {
 				deletePids.setInt(1, pid);
-				
+
 				deletePids.addBatch();
 			}
 

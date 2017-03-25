@@ -475,7 +475,7 @@ public class UotelDriver {
 				}
 				
 				int value = promptForInt(in, "Type number of visit you want to get rid of. If none press 0.",
-						"Try again inavlid input", 0, reservationCart.size(), false);
+						"Try again inavlid input", 0, visitCart.size(), false);
 				if (value == 0) {
 					break;
 				} else {
@@ -484,7 +484,17 @@ public class UotelDriver {
 			}
 			
 			//Inserting visits
-			q.insertVisits(user, visitCart, con);
+			ArrayList<Reservation> failed = q.insertVisits(user, visitCart, con);
+			if (failed.size() > 0){
+				System.out.println("The following visits were not successfully documented:");
+				for (Reservation res : failed){
+					System.out.println(res.toString());
+				}
+			}
+			else if (!visitCart.isEmpty()){
+				System.out.println("You have successfully recorded all visists");
+			}
+			
 		}else{
 			System.out.println("No visits to review!");
 		}
@@ -1306,7 +1316,7 @@ public class UotelDriver {
 	 */
 	public static void displayOperations(boolean isAdmin) {
 		System.out.println("      Home     ");
-		System.out.println("0. logout");
+		System.out.println("0. logout and review");
 		System.out.println("2. Create a listing");
 		System.out.println("3. Alter a listing");
 		System.out.println("4. Record a stay");
