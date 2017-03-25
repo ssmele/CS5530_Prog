@@ -43,5 +43,9 @@ public class Period {
 	public void setPid(int pid) {
 		this.pid = pid;
 	}
+	
+	public String toString(){
+		return "From: " + this.getFrom() + "\tTo: " + this.getTo();
+	}
 
 }

@@ -313,17 +313,38 @@ public class UotelDriver {
 					}
 				case "10":
 				case "Availabilities":
-					System.out.println("Please provide a start and end of this availability.");
-					Date from = promptForDate(in, "Start of availability? (YYYY-MM-DD)");
-					Date to = promptForDate(in, "End of availability?  (YYYY-MM-DD)");
-					int price_per_night = promptForInt(in, "Please provide a price_per_night during this availability", "Invalid entry please try again!", 
+					ArrayList<Period> periods = q.getAvailability(toUpdate, con.stmt);
+					System.out.println("0. back");
+					i = 0;
+					for (i = 0; i < periods.size(); i++){
+						System.out.println(i+1 + ". Delete period: " + periods.get(i).toString());
+					}
+					System.out.println(i + 1 + ". Add new date");
+					String prompt = "Go back, select a date to delete, or add new date";
+					String error = "Please enter a valid option.";
+					int option = promptForInt(in, prompt, error, 0, i+1, false);
+					if (option == 0)
+						continue;
+					else if (option == i + 1){
+						System.out.println("Please provide a start and end of this availability.");
+						Date from = promptForDate(in, "Start of availability? (YYYY-MM-DD)");
+						Date to = promptForDate(in, "End of availability?  (YYYY-MM-DD)");
+						int price_per_night = promptForInt(in, "Please provide a price_per_night during this availability", "Invalid entry please try again!", 
 													   1,Integer.MAX_VALUE, false);
-					
-					Period new_period = new Period(-1, from, to, price_per_night);
-					q.insertAvailability(toUpdate, new_period, con);
+						Period new_period = new Period(-1, from, to, price_per_night);
+						q.insertAvailability(toUpdate, new_period, con);
+					}
+					else{
+						boolean b = q.removeAvailable(con.stmt, toUpdate.getHid(), periods.get(option - 1).getPid());
+						if (b)
+							System.out.println("You have successfully removed the period: " + periods.get(option - 1).toString());
+						else
+							System.out.println("Something went wrong processing your request");
+					}
+					break;
 				case "0":
 				case "Done":
-					System.out.println("Your changes will now be updated.");
+					System.out.println("Any changes have been updated!");
 					return toUpdate;
 				default:
 					System.out.print("Didnt match any updatable values. Please try again.");
@@ -976,7 +997,7 @@ public class UotelDriver {
 			System.out.println("Invalid response please try again.");
 		}
 
-		System.out.println("Please enter price of th per night:");
+		System.out.println("Please enter estimated price of th per night:");
 		while ((string_price = in.readLine()) == null || string_price.length() == 0 || price <= 0) {
 			try {
 				price = Integer.parseInt(string_price);

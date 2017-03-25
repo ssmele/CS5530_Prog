@@ -112,7 +112,7 @@ public class Querys {
 		int pid = -1;
 		try {
 			PreparedStatement insertPeriod = con.con.prepareStatement(
-					"insert into period (from, to) " + "values (?, ?)", Statement.RETURN_GENERATED_KEYS);
+					"insert into period (period.from, period.to) " + "values (?, ?);", Statement.RETURN_GENERATED_KEYS);
 			
 			insertPeriod.setDate(1, period.getFrom());
 			insertPeriod.setDate(2, period.getTo());
@@ -120,10 +120,11 @@ public class Querys {
 			insertPeriod.executeUpdate();
 			
 			ResultSet rs = insertPeriod.getGeneratedKeys();
+			rs.next();
 			pid = rs.getInt(1);
 
 		} catch (java.sql.SQLIntegrityConstraintViolationException e) {
-			System.out.println("Youve already given feedback !");
+			System.out.println("This date overlaps!");
 			return;
 		} catch (Exception e) {
 			System.out.println("Cannot execute the period query.");
@@ -140,7 +141,7 @@ public class Querys {
 		//Insert into ava the new availability. 
 		try {
 			PreparedStatement insertAvailable = con.con.prepareStatement(
-					"insert into period " + "values (?, ?, ?)");
+					"insert into available " + "values (?, ?, ?);");
 			
 			insertAvailable.setInt(1, th.getHid());
 			insertAvailable.setInt(2, pid);
@@ -227,6 +228,7 @@ public class Querys {
 		}
 
 		//Return new TH to the user.
+		System.out.println("Congrats your TH has been added!");
 		return new TH(-1, category, price, year_built, name, address, url, phone, current_user.getLogin(), Date.valueOf(LocalDate.now()));
 
 	}
@@ -1022,9 +1024,28 @@ public class Querys {
 		return keywodList;
 	}
 	
+	/***
+	 * Attempts to delete an entry in available.
+	 * @param stmt
+	 * @param hid
+	 * @param pid
+	 * @return
+	 */
+	public boolean removeAvailable(Statement stmt, int hid, int pid){
+		String sql = "delete from available where hid = " + hid + " and pid = " + pid + ";";
+		try{
+			stmt.executeUpdate(sql);
+			return true;
+		}
+		catch (Exception e){
+			return false;
+		}
+	}
+	
 	public ArrayList<Period> getAvailability(TH th, Statement stmt){
 		ArrayList<Period> periodList = new ArrayList<>();
-		String sql = "select * from available, period where  available.hid = " + th.getHid() + " and period.pid = available.pid;";
+		String sql = "select * from available, period where available.hid = " + th.getHid() + 
+				" and period.pid = available.pid and period.from > sysdate();";
 
 		//Execute the most useful query and then add each feedback 
 		ResultSet rs = null;
