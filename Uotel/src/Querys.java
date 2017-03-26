@@ -710,8 +710,7 @@ public class Querys {
 	 */
 	public ArrayList<String> mostUsefulUser(int limit, Statement stmt) {
 		ArrayList<String> loginList = new ArrayList<>();
-		String sql = "select login, sum(score) " + "from feedback " + "group by login " + "order by sum(score) "
-				+ "desc limit " + Integer.toString(limit) + ";";
+		String sql = "select feedback.login, avg(rate.rating) from rate, feedback where feedback.fid = rate.fid  group by feedback.login order by avg(rating) desc limit " + Integer.toString(limit) + ";";
 
 		// Execute the most trusted user query. For each entry get the login and
 		// add it to the list.

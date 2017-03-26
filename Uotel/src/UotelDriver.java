@@ -96,7 +96,7 @@ public class UotelDriver {
 				c = 100;
 			}
 			// Case for statistics
-			if (c <= 19 && c >= 7) {
+			if (c <= 9 && c >= 7) {
 				viewStatistics(c, con, in, usr, reservationCart, prd_chng);
 			}
 			switch (c) {
@@ -1464,6 +1464,7 @@ public class UotelDriver {
 		System.out.println("8. View most expensive by category");
 		System.out.println("9. View highest rated by category");
 		if (isAdmin) {
+			System.out.println("Admin options:");
 			System.out.println("10. Top m 'trusted' users.");
 			System.out.println("11. Top m 'useful' users.");
 		}
