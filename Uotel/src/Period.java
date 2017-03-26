@@ -47,5 +47,16 @@ public class Period {
 	public String toString(){
 		return "From: " + this.getFrom() + "\tTo: " + this.getTo();
 	}
+	
+	@Override
+	public boolean equals(Object o){
+		Period p = (Period)o;
+		return this.pid == p.pid;
+	}
+	
+	@Override
+	public int hashCode() {
+	    return 79*this.pid;
+	}
 
 }

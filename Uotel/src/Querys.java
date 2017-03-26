@@ -1120,6 +1120,70 @@ public class Querys {
 		return;
 	}
 
+	/**
+	 * This method updates a given period to have the specified to and from
+	 * dates.
+	 * 
+	 * @param prd
+	 * @param from
+	 * @param to
+	 */
+	public void updatePeriod(Connection con, ArrayList<ResPeriodPair> reservations) {
+		for (ResPeriodPair res : reservations) {
+			try {
+				PreparedStatement updatePeriod = con
+						.prepareStatement("UPDATE period " + "SET period.from = ?, period.to = ? "
+								+ "WHERE period.pid = " + res.getPeriod().getPid() + ";");
+				updatePeriod.setDate(1, res.getPeriod().getFrom());
+				updatePeriod.setDate(2, res.getPeriod().getTo());
+				updatePeriod.executeUpdate();
+			} catch (Exception e) {
+				System.out.println("Unable to update period");
+			}
+		}
+	}
+
+	/**
+	 * This method add all new periods and add them to the availability table
+	 * for the given th.
+	 * 
+	 * @param con
+	 * @param reservations
+	 */
+	public void updateAvailable(Connection con, ArrayList<ResPeriodPair> reservations) {
+		for (ResPeriodPair res : reservations) {
+			ArrayList<Integer> newPids = new ArrayList<Integer>();
+			ArrayList<Period> psToAdd = res.getReservation().getPeriodsToAdd();
+			for (Period p : psToAdd) {
+				try {
+					PreparedStatement insertPer = con.prepareStatement("INSERT INTO period "
+							+ "(period.from, period.to) VALUES (?, ?);",
+							Statement.RETURN_GENERATED_KEYS);
+					insertPer.setDate(1, p.getFrom());
+					insertPer.setDate(2, p.getTo());
+					insertPer.executeUpdate();
+					ResultSet rs = insertPer.getGeneratedKeys();
+					rs.next();
+					newPids.add(rs.getInt(1));
+				} catch (Exception e) {
+					System.out.println("Cannot insert new period.");
+				}
+			}
+			for (Integer pid : newPids) {
+				try {
+					PreparedStatement newAvail = con.prepareStatement(
+							"INSERT INTO available (hid, pid, price_per_night)" + "VALUES (?, ?, ?);");
+					newAvail.setInt(1, res.getReservation().getHid());
+					newAvail.setInt(2, pid);
+					newAvail.setInt(3, res.getReservation().getPrice_per_night());
+					newAvail.executeUpdate();
+				} catch (Exception e) {
+					System.out.println("Cannot add availability");
+				}
+			}
+		}
+	}
+
 	public void insertVisit(User user, Reservation res, Connection con) {
 		try {
 			PreparedStatement insertRes = con
@@ -1133,7 +1197,7 @@ public class Querys {
 			// TODO: DOnt really know what exceptions could get thrown here need
 			// to do more experimenting.
 		} catch (java.sql.SQLIntegrityConstraintViolationException e) {
-			System.out.println("Something went wrong pleas try again.");
+			System.out.println("Something went wrong please try again.");
 			return;
 		} catch (Exception e) {
 			System.out.println("cannot execute the query");
@@ -1233,7 +1297,7 @@ public class Querys {
 	 */
 	public void deletePeriods(ArrayList<Integer> pidList, Connection con) {
 		try {
-			PreparedStatement deletePids = con.prepareStatement("delete from period where pid = ?;");
+			PreparedStatement deletePids = con.prepareStatement("delete from available where pid = ?;");
 
 			// Make a batch statement that will delete all the pids.
 			for (Integer pid : pidList) {

@@ -1,4 +1,5 @@
 import java.sql.Date;
+import java.util.ArrayList;
 
 public class Reservation {
 	
@@ -8,7 +9,7 @@ public class Reservation {
 	private int price_per_night;
 	private String login;
 	private int hid;
-	
+	private ArrayList<Period> periodsToAdd;
 	
 	public Reservation(int rid, Date from, Date to, int price_per_night, String login, int hid) {
 		super();
@@ -43,6 +44,12 @@ public class Reservation {
 	}
 	public void setTo(Date to) {
 		this.to = to;
+	}
+	public void setPeriodsToAdd(ArrayList<Period> p){
+		this.periodsToAdd = p;
+	}
+	public ArrayList<Period> getPeriodsToAdd(){
+		return this.periodsToAdd;
 	}
 	public int getPrice_per_night() {
 		return price_per_night;
