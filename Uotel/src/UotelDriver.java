@@ -5,9 +5,7 @@ import java.sql.Statement;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 
 public class UotelDriver {
 
@@ -280,7 +278,6 @@ public class UotelDriver {
 					int i;
 					for (i = 0; i < keywordList.size(); i++) {
 						System.out.println(Integer.toString(i + 1) + ". " + keywordList.get(i).getWord() + " (Delete)");
-
 					}
 					System.out.println(Integer.toString(i+1) + ". Add keyword!");
 
@@ -400,14 +397,25 @@ public class UotelDriver {
 			;
 
 		System.out.println("please enter your phone:");
-		while ((phone = in.readLine()) == null || phone.length() == 0)
-			;
+		while ((phone = in.readLine()) == null || phone.length() == 0 || phone.length() > 10){
+			System.out.println("Invalid phone entry try again.");
+		}
 		
 		//Add the user to the database.
 		Querys q = new Querys();
 		return q.newUser(login, name, password, address, phone, false, stmt);
 	}
 	
+	/**
+	 * Method for handling when a user logs out. Goes through reservation cart, and visit cart asking if user
+	 * wants to remove any before adding them to th database.
+	 * @param in
+	 * @param user
+	 * @param con
+	 * @param visitCart
+	 * @param reservationCart
+	 * @throws IOException
+	 */
 	public static void handleLogOut(BufferedReader in, User user, Connection con, ArrayList<Reservation> visitCart, 
 			ArrayList<ResPeriodPair> reservationCart) throws IOException{
 		//First show all reservations
@@ -441,7 +449,6 @@ public class UotelDriver {
 					reservationCart.remove(--value);
 				}
 			}
-			//TODO: do all current period and insert others
 			q.updatePeriod(con, reservationCart);
 			q.updateAvailable(con, reservationCart);
 			
@@ -683,7 +690,8 @@ public class UotelDriver {
 		}
 	}
 
-	/***
+	/**
+	 * Helper method to help trim away uneeded stuff we are returning to the user.
 	 * @param ths
 	 * @param all
 	 * @return The list of THs limited by number per category
@@ -707,8 +715,15 @@ public class UotelDriver {
 		}
 		return retList;
 	}
-	
-	//TODO: implement this thing WOO WOO SWAG!
+
+	/**
+	 * THis method allows users to give feedback on other ths.
+	 * @param in
+	 * @param th
+	 * @param usr
+	 * @param con
+	 * @throws IOException
+	 */
 	public static void handleGiveFeedback(BufferedReader in, TH th, User usr, Connection con) throws IOException{
 		// Get the max price value
 		String prompt, error, text;
@@ -716,8 +731,7 @@ public class UotelDriver {
 		error = "Please enter a valid option";
 		text = promptForString(in, prompt, error, false);
 		
-		//Get date for the 
-		//TODO: Should this be user inputed?
+		//Get date for the feedback.
 		Date date = Date.valueOf(LocalDate.now());
 		
 		int score;
@@ -729,6 +743,14 @@ public class UotelDriver {
 		q.insertFeedback(usr, th, text, score, date, con);
 	}
 	
+	/**
+	 * This method displays the feedbacks to the users so they then can either rate or trust the user associated with the feedback.
+	 * @param in
+	 * @param th
+	 * @param usr
+	 * @param con
+	 * @throws IOException
+	 */
 	public static void handleViewFeedback(BufferedReader in, TH th, User usr, Connector con) throws IOException{
 		//Gather all feedback for that th.
 		Querys q = new Querys();
@@ -782,6 +804,14 @@ public class UotelDriver {
 
 	}
 
+	/**
+	 * This is the method that allows users to register a stay at a reservation.
+	 * @param usr
+	 * @param in
+	 * @param con
+	 * @param visitCart
+	 * @throws IOException
+	 */
 	public static void handleStay(User usr, BufferedReader in, Connector con, ArrayList<Reservation> visitCart) throws IOException{
 		//Gather up the unstayedReservations for that particular user.
 		Querys q = new Querys();
@@ -809,11 +839,21 @@ public class UotelDriver {
 		visitCart.add(visitedReservation);
 	}
 	
+	/**
+	 * This is the method that allows a user to make a reservation in the system. Gets the availale dates for which a user can make a reservation,
+	 * then helps them through the selection process of making the reservation.
+	 * @param usr
+	 * @param th
+	 * @param in
+	 * @param con
+	 * @param reservationCart
+	 * @throws IOException
+	 */
 	public static void handleReservation(User usr, TH th, BufferedReader in, Connector con, 
 			ArrayList<ResPeriodPair> reservationCart) throws IOException{
 		Querys q = new Querys();
+	
 		
-		//TODO: Still need to remove the availability. 
 		//First get dates available
 		ArrayList<Period> avaDates = q.getAvailability(th, con.stmt);
 		
