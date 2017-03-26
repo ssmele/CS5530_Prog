@@ -8,10 +8,25 @@ import java.sql.PreparedStatement;
 
 import java.sql.Connection;
 
+/**
+ * This class is filled with all the queries we need to make the Uotel Application.
+ * @author stone and jordan
+ *
+ */
 public class Querys {
 	public Querys() {
 	}
 
+	/**
+	 * This method is used insert a feedback into the database. Makes checks to ensure user is not making feedback
+	 * on their own th, and that they havnt already made feedback on this th.
+	 * @param usr
+	 * @param th
+	 * @param text
+	 * @param score
+	 * @param date
+	 * @param con
+	 */
 	public void insertFeedback(User usr, TH th, String text, int score, Date date, Connection con) {
 
 		// First need to do checks to ensure user does nto own the th they are
@@ -98,7 +113,10 @@ public class Querys {
 	}
 
 	/**
-	 * Insert a new ava for a given Th.
+	 * Insert a new ava for a given Th. 
+	 * 
+	 * THis method is a little bit different in that it needs to add the period before anything,
+	 * and we are using a prepared statemenet to return us the generated keys that were made.
 	 * 
 	 * @param th
 	 * @param period
@@ -967,6 +985,13 @@ public class Querys {
 		return feedbackList;
 	}
 
+	/**
+	 * Method used to delete a keyword that is selected by a user. It does this based off the wid, and hid
+	 * assocaited with the keyword and th we are removing this from.
+	 * @param th
+	 * @param keyword
+	 * @param stmt
+	 */
 	public void deleteKeyword(TH th, Keyword keyword, Statement stmt) {
 		String sql = "delete from has_keyword where has_keyword.wid = " + Integer.toString(keyword.getWid())
 				+ " and has_keyword.hid = " + Integer.toString(th.getHid());
@@ -983,6 +1008,12 @@ public class Querys {
 		}
 	}
 
+	/**
+	 * Gets the keywords for the th specified. Just a simple and nice select statement.
+	 * @param th
+	 * @param stmt
+	 * @return
+	 */
 	public ArrayList<Keyword> getKeywords(TH th, Statement stmt) {
 		ArrayList<Keyword> keywodList = new ArrayList<>();
 		String sql = "select * from has_keyword, keyword where has_keyword.hid = " + Integer.toString(th.getHid())
@@ -1027,6 +1058,13 @@ public class Querys {
 		}
 	}
 
+	/**
+	 * Get the availabilities for the specified th.
+	 * 
+	 * @param th
+	 * @param stmt
+	 * @return
+	 */
 	public ArrayList<Period> getAvailability(TH th, Statement stmt) {
 		ArrayList<Period> periodList = new ArrayList<>();
 		String sql = "select * from available, period where available.hid = " + th.getHid()
@@ -1092,6 +1130,12 @@ public class Querys {
 		return new Reservation(-1, p.getFrom(), p.getTo(), p.getPrice(), user.getLogin(), th.getHid());
 	}
 
+	/**
+	 * Used to insert reservations into the database.
+	 * @param user
+	 * @param pairs
+	 * @param con
+	 */
 	public void insertReservations(User user, ArrayList<ResPeriodPair> pairs, Connection con) {
 		try {
 			PreparedStatement insertRes = con
@@ -1184,6 +1228,12 @@ public class Querys {
 		}
 	}
 
+	/**
+	 * Method used to insert visits into the database.
+	 * @param user
+	 * @param res
+	 * @param con
+	 */
 	public void insertVisit(User user, Reservation res, Connection con) {
 		try {
 			PreparedStatement insertRes = con
@@ -1205,6 +1255,13 @@ public class Querys {
 		}
 	}
 
+	/**
+	 * Method used to isert multiple visits into the database.
+	 * @param user
+	 * @param res
+	 * @param con
+	 * @return
+	 */
 	public ArrayList<Reservation> insertVisits(User user, ArrayList<Reservation> res, Connection con) {
 
 		ArrayList<Reservation> failed = new ArrayList<Reservation>();
@@ -1229,6 +1286,13 @@ public class Querys {
 		}
 	}
 
+	/**
+	 * Method used to get reservations that have not been selected as visited by the user. Used when display stuff for 
+	 * users to records stays.
+	 * @param user
+	 * @param stmt
+	 * @return
+	 */
 	public ArrayList<Reservation> getUnstayedReservation(User user, Statement stmt) {
 		String sql = "select * from reserve where rid not in (select rid from visit) and login = '" + user.getLogin()
 				+ "'";
@@ -1258,6 +1322,12 @@ public class Querys {
 		return resList;
 	}
 
+	/**
+	 * Method used to get the feedback for a given th.
+	 * @param th
+	 * @param stmt
+	 * @return
+	 */
 	public ArrayList<Feedback> getFeedbackTH(TH th, Statement stmt) {
 		String sql = "select * from feedback where feedback.hid = " + Integer.toString(th.getHid()) + ";";
 
