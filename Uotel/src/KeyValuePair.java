@@ -1,4 +1,9 @@
 
+/**
+ * Very simple tuple class used in various places around this project.
+ * @author stone
+ *
+ */
 public class KeyValuePair {
 	public String key;
 	public String value;

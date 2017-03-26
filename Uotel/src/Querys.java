@@ -258,7 +258,7 @@ public class Querys {
 	public ArrayList<TH> getUsersTHs(String login, Statement stmt) {
 		String sql = "Select * from th where login = '" + login + "';";
 
-		System.out.println("executing: " + sql);
+		//System.out.println("executing: " + sql);
 		ResultSet rs = null;
 		ArrayList<TH> thList = new ArrayList<TH>();
 

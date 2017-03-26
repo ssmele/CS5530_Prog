@@ -1,4 +1,9 @@
-
+/**
+ * Data structure used to store a reservation, and a period. Used for storing data on visits that a user
+ * has taken.
+ * @author stone
+ *
+ */
 public class ResPeriodPair {
 
 	private Reservation reservation;

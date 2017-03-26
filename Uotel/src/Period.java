@@ -1,5 +1,11 @@
 import java.sql.Date;
 
+/**
+ * This class is kind of a combination of our Period, and Availability models. It adds one field to the period model that is price.
+ * Has standard getters and setters.
+ * @author stone
+ *
+ */
 public class Period {
 	
 	private int pid;

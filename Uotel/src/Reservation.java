@@ -1,6 +1,11 @@
 import java.sql.Date;
 import java.util.ArrayList;
 
+/**
+ * Clas used to represent our reservation model within the database. Standard getters and setters.
+ * @author stone
+ *
+ */
 public class Reservation {
 	
 	private int rid;

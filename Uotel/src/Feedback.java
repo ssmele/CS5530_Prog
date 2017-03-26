@@ -1,5 +1,10 @@
 import java.sql.Date;
 
+/**
+ * Class used to represent our feedback data model. Stores all fields that we have in the database here.
+ * @author stone
+ *
+ */
 public class Feedback {
 	
 	private int fid;

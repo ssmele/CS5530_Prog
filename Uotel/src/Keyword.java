@@ -1,4 +1,9 @@
 
+/**
+ * Class that models our keyword structure from our database.
+ * @author stone
+ *
+ */
 public class Keyword {
 	
 	private int wid;

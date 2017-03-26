@@ -17,12 +17,12 @@ public class UotelDriver {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		// TODO: maybe created helper methods for logging in and
-		// creating an account.
 		System.out.println("        Welcome to the Uotel System     ");
 		Connector con = null;
 		String choice;
 
+		//Switch statement to either log user in, or have them register. Either way it will pass a user object to the Application Driver which
+		//will start the program.
 		int c = 0;
 		try {
 			con = new Connector();
@@ -95,7 +95,7 @@ public class UotelDriver {
 				c = 100;
 			}
 			// Case for statistics
-			if (c <= 9 && c >= 7) {
+			if (c <= 8 && c >= 6) {
 				viewStatistics(c, con, in, usr, reservationCart);
 			}
 			switch (c) {
@@ -104,33 +104,33 @@ public class UotelDriver {
 				handleLogOut(in, usr, con.con, visitCart, reservationCart);
 				// case for logout
 				return;
-			case 2:
+			case 1:
 				// Case for listing
 				handleListing(con, in, usr);
 				break;
-			case 3:
+			case 2:
 				// case for altering a listing
 				handleListingChange(con, in, usr);
 				break;
-			case 4:
+			case 3:
 				// case for recording a stay
 				handleStay(usr, in, con, visitCart);
 				break;
-			case 5:
+			case 4:
 				// case for browsing
 				handleBrowsing(con, in, usr, reservationCart);
 				break;
-			case 6:
+			case 5:
 				// Determine two degree separation
 				handleSeparation(con, in);
 				break;
-			case 10:
+			case 9:
 				// Most trusted.
 				if (usr.isAdmin()) {
 					handleMostTrusted(in, con.stmt);
 					break;
 				}
-			case 11:
+			case 10:
 				// Most useful.
 				if (usr.isAdmin()) {
 					handleMostUseful(in, con.stmt);
@@ -212,8 +212,8 @@ public class UotelDriver {
 				System.out.println("5.Address");
 				System.out.println("6.Url");
 				System.out.println("7.Phone");
-				System.out.println("9.Keywords");
-				System.out.println("10. Availabilities");
+				System.out.println("8.Keywords");
+				System.out.println("9. Availabilities");
 				System.out.println("Please enter name or number of value you want to update.");
 				response = in.readLine();
 				switch (response) {
@@ -272,19 +272,14 @@ public class UotelDriver {
 					}
 					toUpdate.setPhone(updateValue);
 					break;
-					//TODO: SHOULD THIS BE UPDATABLE.
-//				case "Date_Listed":
-//				case "8":
-//					toUpdate.setDate_listed(promptForDate(in));
-//					break;
-				case "9":
+				case "8":
 				case "Keywords":
 					System.out.println("Current keywords assocaited with this TH:");
 					ArrayList<Keyword> keywordList = q.getKeywords(toUpdate, con.stmt);
 					System.out.println("0. Back");
 					int i;
 					for (i = 0; i < keywordList.size(); i++) {
-						System.out.println(Integer.toString(i + 1) + ". " + keywordList.get(i).getWord());
+						System.out.println(Integer.toString(i + 1) + ". " + keywordList.get(i).getWord() + " (Delete)");
 
 					}
 					System.out.println(Integer.toString(i+1) + ". Add keyword!");
@@ -293,7 +288,6 @@ public class UotelDriver {
 					// here.
 					if (keywordList.isEmpty()) {
 						System.out.println("This TH has no keywords assocaited with it yet.");
-						break;
 					}
 					
 					int keywordNum = promptForInt(in, "Please enter a valid option.", "Invalid number", 0, keywordList.size() + 1, false);
@@ -313,7 +307,7 @@ public class UotelDriver {
 						q.addKeywordToHID(updateValue, toUpdate.getHid(), con.stmt);
 						break;
 					}
-				case "10":
+				case "9":
 				case "Availabilities":
 					ArrayList<Period> periods = q.getAvailability(toUpdate, con.stmt);
 					System.out.println("0. back");
@@ -553,7 +547,7 @@ public class UotelDriver {
 	 */
 	public static void handleMostUseful(BufferedReader in, Statement stmt) {
 		int limit;
-		System.out.println("What is the max number of houses you would like displayed?");
+		System.out.println("What is the max number of user's you would like displayed?");
 		while (true) {
 			try {
 				// Check to see if the user wants to go back.
@@ -670,17 +664,17 @@ public class UotelDriver {
 			}
 			ArrayList<TH> resultList = new ArrayList<TH>();
 			switch (choice) {
-			case 7:
+			case 6:
 				// choice for most popular
 				resultList = limitCategoryNum(q.getMostPopular(con.stmt), num);
 				viewTHs(resultList, con, in, usr, true, reservationCart);
 				return;
-			case 8:
+			case 7:
 				// choice for most expensive
 				resultList = limitCategoryNum(q.getMostExpensive(con.stmt), num);
 				viewTHs(resultList, con, in, usr, true, reservationCart);
 				return;
-			case 9:
+			case 8:
 				// choice for highest rated
 				resultList = limitCategoryNum(q.getHighestRated(con.stmt), num);
 				viewTHs(resultList, con, in, usr, true, reservationCart);
@@ -1458,18 +1452,18 @@ public class UotelDriver {
 	public static void displayOperations(boolean isAdmin) {
 		System.out.println("      Home     ");
 		System.out.println("0. logout and review");
-		System.out.println("2. Create a listing");
-		System.out.println("3. Alter a listing");
-		System.out.println("4. Record a stay");
-		System.out.println("5. Search for a house");
-		System.out.println("6. Determine two degree seperation");
-		System.out.println("7. View most popular houses by category");
-		System.out.println("8. View most expensive by category");
-		System.out.println("9. View highest rated by category");
+		System.out.println("1. Create a listing");
+		System.out.println("2. Alter a listing");
+		System.out.println("3. Record a stay");
+		System.out.println("4. Search for a house");
+		System.out.println("5. Determine two degree seperation");
+		System.out.println("6. View most popular houses by category");
+		System.out.println("7. View most expensive by category");
+		System.out.println("8. View highest rated by category");
 		if (isAdmin) {
 			System.out.println("Admin options:");
-			System.out.println("10. Top m 'trusted' users.");
-			System.out.println("11. Top m 'useful' users.");
+			System.out.println("9. Top m 'trusted' users.");
+			System.out.println("10. Top m 'useful' users.");
 		}
 	}
 

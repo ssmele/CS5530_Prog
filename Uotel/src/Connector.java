@@ -4,6 +4,10 @@ public class Connector {
 	public Connection con;
 	public Statement stmt;
 	
+	/**
+	 * Class we use to generate connections to the database.
+	 * @throws Exception
+	 */
 	public Connector() throws Exception {
 		try {
 			String userName = "5530u66";
