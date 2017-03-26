@@ -4,9 +4,10 @@ import java.sql.Date;
 import java.sql.Statement;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.HashMap;
 import java.util.HashSet;
-
-import com.sun.xml.internal.bind.v2.runtime.unmarshaller.XsiNilLoader.Array;
+import java.util.Map;
 
 public class UotelDriver {
 
@@ -82,6 +83,7 @@ public class UotelDriver {
 	public static void applicationDriver(Connector con, BufferedReader in, User usr) throws IOException {
 		ArrayList<Reservation> visitCart = new ArrayList<>();
 		ArrayList<ResPeriodPair> reservationCart = new ArrayList<>();
+		HashMap<Period, ArrayList<Period>> prd_chng = new HashMap<Period, ArrayList<Period>>();
 		while (true) {
 			displayOperations(usr.isAdmin());
 			String choice = null;
@@ -95,12 +97,12 @@ public class UotelDriver {
 			}
 			// Case for statistics
 			if (c <= 19 && c >= 7) {
-				viewStatistics(c, con, in, usr, reservationCart);
+				viewStatistics(c, con, in, usr, reservationCart, prd_chng);
 			}
 			switch (c) {
 			case 0:
 				//TODO: need to review reservations, and stays.
-				handleLogOut(in, usr, con.con, visitCart, reservationCart);
+				handleLogOut(in, usr, con.con, visitCart, reservationCart, prd_chng);
 				// case for logout
 				return;
 			case 2:
@@ -117,7 +119,7 @@ public class UotelDriver {
 				break;
 			case 5:
 				// case for browsing
-				handleBrowsing(con, in, usr, reservationCart);
+				handleBrowsing(con, in, usr, reservationCart, prd_chng);
 				break;
 			case 6:
 				// Determine two degree separation
@@ -151,7 +153,8 @@ public class UotelDriver {
 	 * @param reservationCart
 	 * @throws IOException
 	 */
-	public static void thSelected(TH th, Connector con, BufferedReader in, User usr, ArrayList<ResPeriodPair> reservationCart) throws IOException {
+	public static void thSelected(TH th, Connector con, BufferedReader in, User usr, 
+			ArrayList<ResPeriodPair> reservationCart, HashMap<Period, ArrayList<Period>> prd_chng) throws IOException {
 		System.out.println("Currently selected TH: " + th.toString());
 		while (true) {
 			displayHouseOptions();
@@ -178,7 +181,7 @@ public class UotelDriver {
 				handleGiveFeedback(in, th, usr, con.con);
 			}
 			if (num == 4){
-				handleReservation(usr, th, in, con, reservationCart);
+				handleReservation(usr, th, in, con, reservationCart, prd_chng);
 			}
 			if (num == 5){
 				handleMostUsefulFeedback(th, in, con.stmt);
@@ -412,7 +415,8 @@ public class UotelDriver {
 		return q.newUser(login, name, password, address, phone, false, stmt);
 	}
 	
-	public static void handleLogOut(BufferedReader in, User user, Connection con, ArrayList<Reservation> visitCart, ArrayList<ResPeriodPair> reservationCart) throws IOException{
+	public static void handleLogOut(BufferedReader in, User user, Connection con, ArrayList<Reservation> visitCart, 
+			ArrayList<ResPeriodPair> reservationCart, HashMap<Period, ArrayList<Period>> prd_chng) throws IOException{
 		//First show all reservations
 		// If they want to remove then remove it from the list. Also have to
 		// know remove visit from the list too.
@@ -647,7 +651,8 @@ public class UotelDriver {
 	 * @param usr
 	 * @throws IOException
 	 */
-	public static void viewStatistics(int choice, Connector con, BufferedReader in, User usr, ArrayList<ResPeriodPair> reservationCart) throws IOException {
+	public static void viewStatistics(int choice, Connector con, BufferedReader in, User usr, 
+			ArrayList<ResPeriodPair> reservationCart, HashMap<Period, ArrayList<Period>> prd_chng) throws IOException {
 		System.out.println("What is the max number of houses you would like displayed per category?");
 		Querys q = new Querys();
 		while (true) {
@@ -666,17 +671,17 @@ public class UotelDriver {
 			case 7:
 				// choice for most popular
 				resultList = limitCategoryNum(q.getMostPopular(con.stmt), num);
-				viewTHs(resultList, con, in, usr, true, reservationCart);
+				viewTHs(resultList, con, in, usr, true, reservationCart, prd_chng);
 				return;
 			case 8:
 				// choice for most expensive
 				resultList = limitCategoryNum(q.getMostExpensive(con.stmt), num);
-				viewTHs(resultList, con, in, usr, true, reservationCart);
+				viewTHs(resultList, con, in, usr, true, reservationCart, prd_chng);
 				return;
 			case 9:
 				// choice for highest rated
 				resultList = limitCategoryNum(q.getHighestRated(con.stmt), num);
-				viewTHs(resultList, con, in, usr, true, reservationCart);
+				viewTHs(resultList, con, in, usr, true, reservationCart, prd_chng);
 				return;
 			}
 		}
@@ -808,8 +813,8 @@ public class UotelDriver {
 		visitCart.add(visitedReservation);
 	}
 	
-//TODO: stone, test, 8, 3, 4, 4, 2, 0, 0 casued a bug.
-	public static void handleReservation(User usr, TH th, BufferedReader in, Connector con, ArrayList<ResPeriodPair> reservationCart) throws IOException{
+	public static void handleReservation(User usr, TH th, BufferedReader in, Connector con, 
+			ArrayList<ResPeriodPair> reservationCart, HashMap<Period, ArrayList<Period>> prd_chng) throws IOException{
 		Querys q = new Querys();
 		
 		//TODO: Still need to remove the availability. 
@@ -841,15 +846,36 @@ public class UotelDriver {
 		
 		//Get period user wants to make a reservation for.
 		int period_num = promptForInt(in,
-				        "What period number do you want to make a reservation for? (Type 0 to go back)",
-					    "Period does not exist try again.", 0, avaDates.size(), false);
+				        "What date range would you like your reservation in? (Type 0 to go back)",
+					    "Please enter a valid option", 0, avaDates.size(), false);
 		if(period_num == 0){
 			return;
 		}
 		Period intended_period = avaDates.get(--period_num);
+		ArrayList<Date> resDates = getDatesBetween(intended_period.getFrom(), intended_period.getTo());
+		int i = 0;
+		// Get the start of the reservation
+		System.out.println("0. Back");
+		for (i = 0; i < resDates.size(); i++){
+			System.out.println(i+1 + ". " + resDates.get(i));
+		}
+		int choice = promptForInt(in, "Pick a start date", "Please pick a valid option", 0, resDates.size(), false);
+		if (choice == 0)
+			return;
+		Date startDate = resDates.get(choice - 1);
+		// Get the end date
+		resDates = getDatesBetween(startDate, intended_period.getTo());
+		System.out.println("0. Back");
+		for (i = 0; i < resDates.size(); i++){
+			System.out.println(i + 1 + ". " + resDates.get(i));
+		}
+		choice = promptForInt(in, "Pick an end date", "Please pick a valid option", 0, resDates.size(), false);
+		if (choice == 0)
+			return;
+		Date endDate = resDates.get(choice - 1);
 		
-		//Insert into cart.
-		Reservation new_res = new Reservation(-1, intended_period.getFrom(), intended_period.getTo(),
+		prd_chng.put(intended_period, generatePeriodChanges(intended_period, startDate, endDate));
+		Reservation new_res = new Reservation(intended_period.getPid(), startDate, endDate,
 				intended_period.getPrice(), usr.getLogin(), th.getHid()); 
 		
 		//Add it to the cart
@@ -868,8 +894,100 @@ public class UotelDriver {
 		if(suggestedList.isEmpty()){
 			System.out.println("No suggested TH's currently so lets continue!");
 		}else{	
-			viewTHs(suggestedList	, con, in, usr, false, reservationCart);
+			viewTHs(suggestedList	, con, in, usr, false, reservationCart, prd_chng);
 		}
+	}
+	
+	/**
+	 * Returns an arraylist of all days within a range
+	 * @param start
+	 * @param end
+	 * @return
+	 */
+	public static ArrayList<Date> getDatesBetween(Date start, Date end){
+		ArrayList<Date> days = new ArrayList<Date>();
+		Date sqlDate = start;
+		days.add(sqlDate);
+		if (start.equals(end))
+			return days;
+		while (true){
+			Calendar cal = Calendar.getInstance();
+			cal.setTime(sqlDate);
+			cal.add(Calendar.DAY_OF_YEAR,1);
+			cal.set(Calendar.HOUR_OF_DAY, 0);
+			cal.set(Calendar.MINUTE, 0);
+			cal.set(Calendar.SECOND, 0);
+			cal.set(Calendar.MILLISECOND, 0);
+			Date sqlTomorrow = new Date(cal.getTimeInMillis());
+			if (sqlTomorrow.equals(end)){
+				days.add(sqlTomorrow);
+				break;
+			}
+			else{
+				days.add(sqlTomorrow);
+				sqlDate = sqlTomorrow;
+			}
+		}
+		return days;
+	}
+	
+	/**
+	 * This method returns a map where the key is the original period and the value 
+	 * is an array of periods to add.
+	 * @param initial
+	 * @param start
+	 * @param end
+	 * @return
+	 */
+	public static ArrayList<Period> generatePeriodChanges(Period initial, Date start, Date end){
+		ArrayList<Period> changes = new ArrayList<Period>();
+		if (initial.getFrom().equals(start) && initial.getTo().equals(end)){
+			return changes;
+		}
+		// Case for only one entry on right side of reservation
+		else if (initial.getFrom().equals(start)){
+			Date after = getAdjacentDate(end, false);
+			Period temp = new Period(-1, after, initial.getTo(), initial.getPrice());
+			changes.add(temp);
+		}
+		// Case for only one entry on left side of reservation
+		else if (initial.getTo().equals(end)){
+			Date before = getAdjacentDate(start, true);
+			Period temp = new Period(-1, initial.getFrom(), before, initial.getPrice());
+			changes.add(temp);
+		}
+		// Case for two entries on each side of reservation
+		else{
+			Date after = getAdjacentDate(end, false);
+			Date before = getAdjacentDate(start, true);
+			Period temp = new Period(-1, after, initial.getTo(), initial.getPrice());
+			Period temp2 = new Period(-1, initial.getFrom(), before, initial.getPrice());
+			changes.add(temp);
+			changes.add(temp2);
+		}
+		return changes;
+	}
+	
+	/**
+	 * Returns an adjacent date to the one given. If before is set to true 
+	 * then the day before is returned, otherwise the day after is returned.
+	 * @param date
+	 * @param before
+	 * @return
+	 */
+	public static Date getAdjacentDate(Date date, boolean before){
+		int day = 1;
+		if (before)
+			day = -1;
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(date);
+		cal.add(Calendar.DAY_OF_YEAR,day);
+		cal.set(Calendar.HOUR_OF_DAY, 0);
+		cal.set(Calendar.MINUTE, 0);
+		cal.set(Calendar.SECOND, 0);
+		cal.set(Calendar.MILLISECOND, 0);
+		Date adjacent = new Date(cal.getTimeInMillis());
+		return adjacent;
 	}
 	
 	/**
@@ -937,7 +1055,8 @@ public class UotelDriver {
 	 * @param usr
 	 * @throws IOException
 	 */
-	public static void viewTHs(ArrayList<TH> ths, Connector con, BufferedReader in, User usr, boolean catOrder, ArrayList<ResPeriodPair> reservationCart)
+	public static void viewTHs(ArrayList<TH> ths, Connector con, BufferedReader in, User usr, boolean catOrder, 
+			ArrayList<ResPeriodPair> reservationCart, HashMap<Period, ArrayList<Period>> prd_chng)
 			throws IOException {
 		while (true) {
 			System.out.println("      List of Houses      ");
@@ -973,7 +1092,7 @@ public class UotelDriver {
 					System.out.println("Please select a valid house");
 					continue;
 				} else {
-					thSelected(ths.get(num - 1), con, in, usr, reservationCart);
+					thSelected(ths.get(num - 1), con, in, usr, reservationCart, prd_chng);
 					break;
 				}
 			}
@@ -1050,7 +1169,8 @@ public class UotelDriver {
 	 * @param usr
 	 * @throws IOException
 	 */
-	public static void handleBrowsing(Connector con, BufferedReader in, User usr, ArrayList<ResPeriodPair> reservationCart) throws IOException {
+	public static void handleBrowsing(Connector con, BufferedReader in, User usr, ArrayList<ResPeriodPair> reservationCart, 
+			HashMap<Period, ArrayList<Period>> prd_chng) throws IOException {
 		int maxPrice = -1;
 		int minPrice = -1;
 		int sort = -1;
@@ -1116,7 +1236,7 @@ public class UotelDriver {
 
 		Querys q = new Querys();
 		ArrayList<TH> retList = q.browse(con.stmt, params, operations, sort);
-		viewTHs(retList, con, in, usr, false, reservationCart);
+		viewTHs(retList, con, in, usr, false, reservationCart, prd_chng);
 	}
 
 	/***
